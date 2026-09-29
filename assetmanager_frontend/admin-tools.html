@@ -1,0 +1,80 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Asset Manager · Admin Tools</title>
+  <link rel="icon" href="./media/favicon/favicon.svg" />
+  <link rel="stylesheet" href="./admin-tools.css" />
+  <script src="./admin-tools.js" defer></script>
+</head>
+<body>
+  <header>
+    <div><h1>Asset Manager · Admin Tools</h1><p>Database and stored file inspection</p></div>
+    <a href="./">Back to asset library</a>
+  </header>
+  <main>
+    <section id="loginPanel" class="panel hidden">
+      <h2>Admin sign in</h2>
+      <p>Use the same admin account as the asset library. A new installation starts with <strong>admin / admin</strong>.</p>
+      <form id="loginForm">
+        <label>Username <input id="loginUsername" autocomplete="username" value="admin" required /></label>
+        <label>Password <input id="loginPassword" type="password" autocomplete="current-password" required /></label>
+        <button type="submit">Sign in</button>
+      </form>
+      <p id="loginError" class="error" role="alert"></p>
+    </section>
+
+    <div id="tools" class="hidden">
+      <nav class="tabs" aria-label="Admin tools">
+        <button id="databaseTab" type="button">Database manager</button>
+        <button id="storageTab" type="button">Stored files</button>
+        <span id="activeUser"></span>
+      </nav>
+      <p id="status" role="status"></p>
+
+      <section id="databaseView" class="panel">
+        <div class="heading"><div><h2>Database manager</h2><p>Browse tables and edit asset metadata. Password hashes and session tokens are hidden.</p></div>
+          <div class="actions"><button id="backupAll" type="button">Backup database + files</button><button id="refreshDatabase" type="button">Refresh</button></div></div>
+        <div id="databaseSummary" class="summary"></div>
+        <div class="toolbar">
+          <label>Table <select id="tableSelect"><option value="assets">Assets</option><option value="users">Users</option><option value="favorites">Favorites</option></select></label>
+          <label>Find asset <input id="tableSearch" placeholder="Name or External ID" /></label>
+          <button id="searchTable" type="button">Search</button>
+        </div>
+        <div class="table-scroll"><table id="databaseTable"></table></div>
+        <div class="pager"><button id="databasePrev" type="button">Previous</button><span id="databasePage"></span><button id="databaseNext" type="button">Next</button></div>
+      </section>
+
+      <section id="storageView" class="panel hidden">
+        <div class="heading"><div><h2>Stored files</h2><p>Check whether each asset file, thumbnail, and poster is present on disk. Orphan files are listed below.</p></div>
+          <button id="refreshStorage" type="button">Scan again</button></div>
+        <div id="storageSummary" class="summary"></div>
+        <div class="toolbar"><label>Find asset <input id="storageSearch" placeholder="Name or External ID" /></label><button id="searchStorage" type="button">Search</button></div>
+        <div class="table-scroll"><table id="storageTable"></table></div>
+        <div class="pager"><button id="storagePrev" type="button">Previous</button><span id="storagePage"></span><button id="storageNext" type="button">Next</button></div>
+        <h3>Files on disk with no database reference</h3>
+        <div class="table-scroll"><table id="orphanTable"></table></div>
+        <div class="pager"><button id="orphanPrev" type="button">Previous</button><span id="orphanPage"></span><button id="orphanNext" type="button">Next</button></div>
+      </section>
+    </div>
+  </main>
+
+  <dialog id="editDialog">
+    <form id="editForm">
+      <h2>Edit asset metadata</h2>
+      <p>File paths are managed by uploads and cannot be edited here.</p>
+      <input id="editInternalId" type="hidden" />
+      <label>Name <input id="editName" required /></label>
+      <label>Category <input id="editCategory" required /></label>
+      <label>External ID <input id="editExternalId" type="number" min="1" required /></label>
+      <label>Tags <input id="editTags" placeholder="comma separated" /></label>
+      <label>Display order <input id="editOrder" type="number" min="0" required /></label>
+      <label class="check"><input id="editVideo" type="checkbox" /> Video</label>
+      <label class="check"><input id="editAnimated" type="checkbox" /> Animated</label>
+      <p id="editError" class="error" role="alert"></p>
+      <div class="actions"><button id="cancelEdit" type="button">Cancel</button><button type="submit">Save changes</button></div>
+    </form>
+  </dialog>
+</body>
+</html>

@@ -1,0 +1,20 @@
+{
+  "name": "ue-asset-manager",
+  "version": "2.0.0",
+  "private": true,
+  "description": "Single-service Unreal Engine asset catalogue",
+  "engines": { "node": ">=24.12 <25" },
+  "scripts": {
+    "start": "node server.js",
+    "test": "node tests/integration.test.js",
+    "restore": "node restore.js"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "bcryptjs": "2.4.3",
+    "express": "5.1.0",
+    "multer": "2.0.2"
+  }
+}

@@ -1,0 +1,53 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Asset {
+  id           Int      @id @default(autoincrement()) @map("id")
+  externalId   Int      @unique @map("externalId")
+  assetName    String
+  thumbnailPath String
+  // Optional poster/static image for animated GIF thumbnails (first frame)
+  thumbnailPosterPath String?
+  assetPath    String
+  category     String
+  // Indicates whether the asset is a video. Stored as integer 0/1 for compatibility with existing code.
+  isVideo      Int      @default(0) @map("isVideo")
+  // Indicates whether the asset has animated content (VAT/flipbook). Stored as integer 0/1.
+  isAnimated   Int      @default(0) @map("isAnimated")
+  tags         String[]
+  // Global presentation order for the unfiltered asset grid. This is deliberately
+  // independent from both the database primary key and externalId.
+  displayOrder Int      @default(0)
+  createdAt    DateTime @default(now())
+  favorites     Favorite[]
+}
+
+model User {
+  id        Int     @id @default(autoincrement())
+  username  String  @unique
+  password  String
+  isAdmin   Boolean @default(false)
+  // Per-user UI preferences: 0 = disabled, 1 = enabled
+  RGB       Int     @default(0)
+  LiquidGlass Int   @default(0)
+  // User-chosen theme/accent color (hex or css color string)
+  ThemeColor String  @default("#ffa31a")
+  createdAt DateTime @default(now())
+}
+
+model Favorite {
+  id        Int      @id @default(autoincrement())
+  username  String
+  assetId   Int
+  asset     Asset    @relation(fields: [assetId], references: [id])
+  createdAt DateTime @default(now())
+
+  @@unique([username, assetId])
+}
+

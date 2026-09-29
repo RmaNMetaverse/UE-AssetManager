@@ -1,0 +1,15 @@
+services:
+  asset-manager:
+    build: .
+    image: ue-asset-manager:local
+    restart: unless-stopped
+    ports:
+      - "${APP_PORT:-4030}:4030"
+    environment:
+      ADMIN_USERNAME: ${ADMIN_USERNAME:-admin}
+      ADMIN_PASSWORD: ${ADMIN_PASSWORD:-admin}
+      PUBLIC_URL: ${PUBLIC_URL:-}
+      TRUST_PROXY: ${TRUST_PROXY:-0}
+      MAX_FILE_BYTES: ${MAX_FILE_BYTES:-53687091200}
+    volumes:
+      - ./data:/data

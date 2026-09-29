@@ -1,0 +1,9 @@
+**/node_modules
+**/.env
+**/.git
+**/data
+**/uploads
+**/scripts
+**/prisma
+**/*.log
+data

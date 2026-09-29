@@ -1,0 +1,521 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Moses Asset Library</title>
+  <link rel="stylesheet" href="./styles.css">
+  <link href="media/assets/fonts/material-symbols..css" rel="stylesheet">
+  <!-- Note: keep a single Material Symbols stylesheet to avoid overriding other icons -->
+  <link rel="icon" type="image/png" href="media/favicon/favicon-96x96.png" sizes="96x96" />
+  <link rel="icon" type="image/svg+xml" href="media/favicon/favicon.svg" />
+  <link rel="shortcut icon" href="media/favicon/favicon.ico" />
+  <link rel="apple-touch-icon" sizes="180x180" href="media/favicon/apple-touch-icon.png" />
+  <link rel="manifest" href="media/favicon/site.webmanifest" />
+
+
+
+</head>
+<body>
+  <div id="layout" class="layout">
+    <aside id="sidePanel" class="side-panel">
+      <div class="side-inner">
+  <div class="side-label">Asset Library <span id="VersionNumber"> v1.85</span></div>
+
+        <div class="side-accordion-container" id="categoryAccordions">
+          <details class="side-accordion" open>
+            <summary>All</summary>
+          </details>
+          <!-- Dynamic category accordions will be injected here -->
+        </div>
+      </div>
+    </aside>
+
+    <div id="mainPanel" class="main-panel">
+      <header class="topbar">
+      <h1>Moses Series Project</h1>
+        <div style="flex:1;display:flex;align-items:center;gap:12px">
+        <div class="search-wrap" style="flex:1; position:relative">
+          <input id="searchInput" type="search" placeholder="Search assets or tags..." autocomplete="off">
+          <!-- Custom clear button (replaces native browser clear). Color uses --accent and can be customized in CSS -->
+          <button id="searchClearBtn" class="search-clear hidden" aria-label="Clear search">✕</button>
+          <div id="suggestions" class="suggestions hidden"></div>
+        </div>
+        <div id="activeTags" class="active-tags"></div>
+    <div id="topbar-buttons-wrap">
+      <span style="margin-left:8px; display:inline-flex; align-items:center; gap:8px;">
+        <button id="sortToggle" class="top-settings" title="Toggle sort by External ID">Newer</button>
+      </span>
+  <button id="refreshBtn" aria-haspopup="true" aria-expanded="false" class="top-settings"><span class="material-symbols-outlined">refresh</span>Refresh</button>
+            <!-- User avatar / quick menu -->
+            <div id="userAvatarWrap" class="user-avatar-wrap">
+              <button id="userAvatarBtn" class="user-avatar" aria-haspopup="true" aria-expanded="false" title="User menu">R</button>
+              <div id="userAvatarMenu" class="user-avatar-menu hidden" role="menu">
+                <button id="settingsBtn" role="menuitem" class="user-avatar-menu-item">Settings</button>
+                <button id="logoutBtn" role="menuitem" class="user-avatar-menu-item">Log out</button>
+              </div>
+            </div>
+        </div>
+      </div>
+    </header>
+
+    <main>
+      <section id="controls" class="controls">
+        <div style="display:flex;align-items:center;gap:8px">
+          <div class="counts" id="counts"></div>
+        </div>
+      </section>
+
+  <div id="mainLoading" class="main-loading hidden"><div class="spinner"></div></div>
+  <section id="grid" class="grid"></section>
+
+  <div id="empty" class="empty hidden">No assets found :(</div>
+    </main>
+    </div>
+  </div>
+
+
+
+<script src="./app.js" defer></script>
+
+<!-- Login overlay: shown until user authenticates -->
+<div id="loginOverlay" class="modal-overlay" aria-hidden="false" style="display:flex;align-items:center;justify-content:center;position:fixed;inset:0;background:rgba(0,0,0,0.86);backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px);z-index:9999">
+  <div style="background:rgba(9,16,22,0.96);padding:28px;border-radius:10px;min-width:340px;color:#fff;box-shadow:0 8px 30px rgba(0,0,0,0.6)">
+    <h2 style="margin:0 0 12px">Sign in</h2>
+    <div style="display:flex;flex-direction:column;gap:8px">
+      <input id="loginUsername" name="username" type="text" placeholder="Username" style="padding:10px;border-radius:6px;border:1px solid #233;background:#071018;color:#fff" autocomplete="username" />
+      <input id="loginPassword" name="password" type="password" placeholder="Password" style="padding:10px;border-radius:6px;border:1px solid #233;background:#071018;color:#fff" autocomplete="current-password" />
+      <div style="display:flex;gap:8px;justify-content:flex-end;margin-top:6px">
+        <button id="loginBtn" class="btn">Sign in</button>
+      </div>
+      <div id="loginError" style="color:#ff6b6b;font-size:13px;display:none"></div>
+      <p style="color:#a7bccb;font-size:12px;margin:4px 0 0">New installation: admin / admin. Change this password after signing in.</p>
+    </div>
+  </div>
+</div>
+
+  <!-- Modal overlay for settings (moved out of side-panel) -->
+  <div id="modalOverlay" class="modal-overlay hidden" aria-hidden="true">
+    <div id="modal" class="modal" role="dialog" aria-modal="true">
+      <div class="modal-header">
+        <h3>Settings</h3>
+        <button id="modalClose" class="modal-close" aria-label="Close">✕</button>
+      </div>
+      <div id="modalContent" class="modal-content">
+        <div class="setting-row theme-row" id="accentSettingRow">
+          <div style="font-weight:700;margin-bottom:20px">Theme color</div>
+          <div id="colorSwatches" style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;width:100%">
+            <!-- Distinct swatches only -->
+            <button class="color-swatch" data-name="teal" data-accent="#19c9bd" data-strong="#26e6cc" title="Teal" style="background:#19c9bd"></button>
+            <button class="color-swatch" data-name="amber" data-accent="#f6b369" data-strong="#f48c23" title="Amber" style="background:#f6b369"></button>
+            <button class="color-swatch" data-name="rose" data-accent="#f56a7f" data-strong="#ff3555" title="Rose" style="background:#f56a7f"></button>
+            <button class="color-swatch" data-name="indigo" data-accent="#6f57e6" data-strong="#4b2ef0" title="Indigo" style="background:#6f57e6"></button>
+            <button class="color-swatch" data-name="lime" data-accent="#c6e77d" data-strong="#92dd1f" title="Lime" style="background:#c6e77d"></button>
+            <button class="color-swatch" data-name="white" data-accent="#ececec" data-strong="#ececec" title="White" style="background:#ececec;border:1px solid rgba(0,0,0,0.06)"></button>
+            <button class="color-swatch" data-name="cloud-dancer" data-accent="#F5F5F4" data-strong="#F5F5F4" title="Pantone 11-4201 Cloud Dancer (2026)" style="background:#F5F5F4;border:1px solid rgba(0,0,0,0.06)"></button>
+            <button class="color-swatch" data-name="True Red" data-accent="#BF1932" data-strong="#A31527" title="Pantone 2002: True Red" style="background:#BF1932"></button>
+            <button class="color-swatch" data-name="Tigerlily" data-accent="#E2583E" data-strong="#C94A32" title="Pantone 2004: Tigerlily" style="background:#E2583E"></button>
+            <button class="color-swatch" data-name="Blue Turquoise" data-accent="#53B0AE" data-strong="#399C9A" title="Pantone 2005: Blue Turquoise" style="background:#53B0AE"></button>
+            <button class="color-swatch" data-name="Chili Pepper" data-accent="#9B1B30" data-strong="#7C1626" title="Pantone 2007: Chili Pepper" style="background:#9B1B30"></button>
+            <button class="color-swatch" data-name="Mimosa" data-accent="#F0C05A" data-strong="#E6B23F" title="Pantone 2009: Mimosa" style="background:#F0C05A"></button>
+            <button class="color-swatch" data-name="Emerald" data-accent="#009473" data-strong="#007A5E" title="Pantone 2013: Emerald" style="background:#009473"></button>
+            <button class="color-swatch" data-name="Radiant Orchid" data-accent="#B163A3" data-strong="#8E4C7F" title="Pantone 2014: Radiant Orchid" style="background:#B163A3"></button>
+            <button class="color-swatch" data-name="Marsala" data-accent="#955251" data-strong="#7B4342" title="Pantone 2015: Marsala" style="background:#955251"></button>
+            <button class="color-swatch" data-name="Greenery" data-accent="#88B04B" data-strong="#6D8A3A" title="Pantone 2017: Greenery" style="background:#88B04B"></button>
+            <button class="color-swatch" data-name="Ultra Violet" data-accent="#5F4B8B" data-strong="#47366B" title="Pantone 2018: Ultra Violet" style="background:#5F4B8B"></button>
+            <button class="color-swatch" data-name="Living Coral" data-accent="#FF6F61" data-strong="#E65C4F" title="Pantone 2019: Living Coral" style="background:#FF6F61"></button>
+            <button class="color-swatch" data-name="Classic Blue" data-accent="#34568B" data-strong="#25406B" title="Pantone 2020: Classic Blue" style="background:#34568B"></button>
+            <button class="color-swatch" data-name="Illuminating" data-accent="#F5DF4D" data-strong="#E6C82F" title="Pantone 2021: Illuminating" style="background:#F5DF4D"></button>
+            <button class="color-swatch" data-name="Very Peri" data-accent="#6667AB" data-strong="#4B4C8B" title="Pantone 2022: Very Peri" style="background:#6667AB"></button>
+            <button class="color-swatch" data-name="Viva Magenta" data-accent="#BE3455" data-strong="#A12C47" title="Pantone 2023: Viva Magenta" style="background:#BE3455"></button>
+            <button class="color-swatch" data-name="Peach Fuzz" data-accent="#FFBE98" data-strong="#E6A87A" title="Pantone 2024: Peach Fuzz" style="background:#FFBE98"></button>
+            <button class="color-swatch" data-name="Future Dusk" data-accent="#475C7A" data-strong="#32405A" title="Pantone 2025: Future Dusk" style="background:#475C7A"></button>
+               <button class="color-swatch" data-name="Accent Orange" data-accent="#ffa31a" data-strong="#ff8a00" title="PHOrange 2007" style="background:#ffa31a"></button>
+               <button id="colorWheelBtn" class="color-swatch" title="Custom Color" style="background:linear-gradient(135deg,#fff 0%,#f00 25%,#0f0 50%,#00f 75%,#fff 100%);border:2px dashed #888;position:relative;">
+              <span style="position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);font-size:18px;color:#333;pointer-events:none;">🎨</span>
+            </button>
+          </div>
+        </div>
+        
+        <!-- RGB Settings Section -->
+        <div class="setting-row">
+          <div class="setting-label">
+            <span style="font-weight:700;">RGB Mode</span>
+          </div>
+          <div style="display:flex;align-items:center;justify-content:space-between;width:100%;">
+            <div style="display:flex;align-items:center;gap:10px;">
+              <span style="color:var(--muted);font-size:14px">Enabled:</span>
+              <input id="accentRgbToggle" type="checkbox" class="styled-checkbox">
+            </div>
+            <div style="display:flex;align-items:center;gap:15px;flex:1;max-width:80%px; margin-left: 10%; margin-right: 5%;">
+              <span style="color:var(--muted);font-size:14px">Speed:</span>
+              <input id="accentRgbSpeed" type="range" min="2" max="60" step="1" value="10" style="flex:1">
+            </div>
+          </div>
+        </div>
+
+        <!-- Checkbox-only row: Liquid Glass + Snow toggle -->
+        <div class="setting-row">
+          <div style="display:flex;align-items:center;gap:16px;justify-content:space-between;width:100%;flex-wrap:wrap;">
+            <div style="display:flex;align-items:center;gap:12px;min-width:260px;flex:1;">
+              <div style="display:flex;align-items:center;gap:10px;">
+                <span style="color:var(--muted);font-size:14px;font-weight:700">Liquid Glass</span>
+                <span style="color:var(--muted);font-size:13px">Glass UI</span>
+              </div>
+              <div>
+                <input id="liquidGlassToggle" type="checkbox" class="styled-checkbox" />
+              </div>
+            </div>
+            <div style="display:flex;align-items:center;gap:12px;min-width:200px;flex:1;">
+              <div style="display:flex;align-items:center;gap:10px;">
+                <span style="font-weight:700;">Snow Effect</span>
+                <span style="color:var(--muted);font-size:13px">Enable falling snow</span>
+              </div>
+              <div>
+                <input id="snowToggle" type="checkbox" class="styled-checkbox">
+              </div>
+            </div>
+          </div>
+        </div>
+        <!-- Liquid Glass Transparency slider (separate row to avoid horizontal compacting) -->
+        <div class="setting-row">
+          <div style="display:flex;align-items:center;gap:12px;justify-content:space-between;width:100%">
+            <div style="display:flex;flex-direction:column;">
+              <span style="font-weight:700;color:var(--muted)">Transparency</span>
+              <span style="font-size:13px;color:var(--muted)">Adjust overall glass opacity</span>
+            </div>
+            <div style="display:flex;align-items:center;gap:12px;min-width:200px;max-width:380px;width:60%">
+              <input id="liquidGlassTransparency" type="range" min="0" max="100" step="1" value="0" style="flex:1">
+              <div style="width:36px;text-align:center;color:var(--muted);font-weight:700"><span id="liquidGlassTransparencyValue">0</span>%</div>
+            </div>
+          </div>
+        </div>
+
+        
+
+        
+        
+        <div class="setting-row">
+          <div class="setting-label">
+              <label for="assetSizeSlider" style="font-weight:700">Assets Grid Size</label>
+          </div>
+          <div style="display:flex;align-items:center;gap:12px;flex:1;max-width:100%">
+            <!-- Discrete slider for asset card size: fewer steps for snappy behavior -->
+            <input id="assetSizeSlider" type="range" min="120" max="360" step="60" value="220" style="flex:1" />
+          </div>
+        </div>
+
+
+
+        
+        
+        
+
+        <div class="setting-row">
+          <button id="changePasswordModalBtn" class="btn small">
+            <span class="material-symbols-outlined" aria-hidden="true">lock_reset</span>
+            Change Password
+          </button>
+
+
+          <button id="clearCacheBtn" class="btn small">
+            <span class="material-symbols-outlined" aria-hidden="true">cleaning_services</span>
+            Clear Cache
+          </button>
+
+
+          <button id="adminPanelBtn" class="btn small">
+            <span class="material-symbols-outlined" aria-hidden="true">manage_accounts</span>
+            Admin Panel
+          </button>
+        </div>
+
+
+      </div>
+    </div>
+  </div>
+  <!-- Fullscreen image viewer overlay -->
+  <div id="imageViewer" class="image-viewer-overlay hidden" aria-hidden="true"></div>
+
+  <!-- Admin Panel overlay (same style as settings modal) -->
+  <div id="adminOverlay" class="modal-overlay hidden" aria-hidden="true">
+    <div id="adminModal" class="modal" role="dialog" aria-modal="true">
+      <div class="modal-header">
+        <h3><span class="material-symbols-outlined admin-header-icon" aria-hidden="true">manage_accounts</span>Admin Panel</h3>
+        <button id="adminClose" class="modal-close" aria-label="Close">✕</button>
+      </div>
+      <div class="modal-content">
+        <div class="custom-sort-admin-row">
+          <div>
+            <label for="customSortToggle">Custom Sort</label>
+            <div class="custom-sort-help">Enable drag and drop on the unfiltered asset list. The saved order is shared with every user.</div>
+          </div>
+          <input id="customSortToggle" type="checkbox" class="styled-checkbox" />
+        </div>
+        <!-- Admin landing panel: three main actions -->
+        <div id="adminActions" style="display:flex;gap:12px;flex-direction:row;align-items:center;flex-wrap:wrap;">
+          <button id="newAssetBtn" class="btn small" type="button"><span class="material-symbols-outlined">add_circle</span>New Asset</button>
+          <button id="deleteAssetBtn" class="btn small" type="button"><span class="material-symbols-outlined">delete</span>Delete Asset</button>
+            <button id="editAssetBtn" class="btn small" type="button"><span class="material-symbols-outlined">edit</span>Edit Asset</button>
+            <button id="replaceTagsBtn" class="btn small" type="button"><span class="material-symbols-outlined">swap_horiz</span>Replace Tags</button>
+          <button id="backupDbBtn" class="btn small" type="button"><span class="material-symbols-outlined">backup</span>Backup All</button>
+          <button id="databaseManagerBtn" class="btn small" type="button"><span class="material-symbols-outlined">database</span>Database</button>
+          <button id="storageManagerBtn" class="btn small" type="button"><span class="material-symbols-outlined">folder_open</span>Stored Files</button>
+          <button id="newUserBtn" class="btn small" type="button"><span class="material-symbols-outlined">person_add</span>New User</button>
+        </div>
+
+  <!-- Hidden: the existing Admin upload form (shown when clicking New Asset) -->
+  <div id="adminUploadForm" style="display:none;flex-direction:column;gap:10px;margin-top:14px;" role="form" aria-hidden="true">
+          <label style="font-weight:700">Upload asset file (50 GiB default limit; large files resume)</label>
+          <div class="setting-row">
+            <label for="uploadThumbnail">Thumbnail (jpg/png/gif/webm)</label>
+            <input id="uploadThumbnail" type="file" accept="image/png, image/jpeg, image/gif, video/webm" />
+          </div>
+          <div class="setting-row">
+            <label for="uploadFile">Asset File</label>
+            <input id="uploadFileInput" type="file" />
+          </div>
+          <input id="uploadAssetName" type="text" placeholder="Asset name" />
+          <select id="uploadCategory" style="padding:8px;border-radius:6px"></select>
+          <input id="uploadTags" type="text" placeholder="Tags (comma separated)" />
+          <div class="setting-row" style="align-items:center;gap:10px">
+            <label for="uploadIsAnimated" style="margin:0">Animated (VAT/flipbook)</label>
+            <input id="uploadIsAnimated" type="checkbox" class="styled-checkbox" />
+          </div>
+          <div style="display:flex;gap:8px;align-items:center">
+            <div id="uploadBtn" role="button" tabindex="0" class="btn">Upload</div>
+            <div id="uploadStatus" style="color:var(--muted)"></div>
+          </div>
+  </div>
+  <!-- Admin delete form (shown when clicking Delete Asset) -->
+  <div id="adminDeleteForm" style="display:none;flex-direction:column;gap:10px;margin-top:14px;" role="form" aria-hidden="true">
+          <label style="font-weight:700">Delete asset by External ID</label>
+          <input id="deleteExternalId" type="number" placeholder="External ID" />
+          <div style="display:flex;gap:8px;align-items:center">
+            <button id="confirmDeleteBtn" class="btn" type="button">Delete</button>
+            <div id="deleteStatus" style="color:var(--muted)"></div>
+            <button id="cancelDeleteBtn" class="btn" type="button">Cancel</button>
+          </div>
+  </div>
+            <!-- Admin replace tags form (sibling of other admin forms so it can be shown independently) -->
+            <div id="adminReplaceTagsForm" style="display:none;flex-direction:column;gap:10px;margin-top:14px;color:var(--muted);" role="form" aria-hidden="true">
+              <label style="font-weight:700">Replace Tags</label>
+              <input id="replaceOldTag" type="text" placeholder="Old Tag Name" />
+              <input id="replaceNewTag" type="text" placeholder="New Tag Name" />
+              <div style="display:flex;gap:8px;align-items:center">
+                <button id="doReplaceTagsBtn" class="btn">Replace</button>
+                <button id="cancelReplaceTagsBtn" class="btn small" style="background:transparent;border:1px solid rgba(255,255,255,0.04);color:var(--muted)">Cancel</button>
+                <div id="replaceTagsStatus" style="color:var(--muted);margin-left:8px"></div>
+              </div>
+            </div>
+  <!-- Edit asset form (hidden) -->
+  <div id="adminEditForm" style="display:none;flex-direction:column;gap:10px;margin-top:14px;" role="form" aria-hidden="true">
+          <label style="font-weight:700">Edit asset by External ID</label>
+          <input id="editExternalId" type="number" placeholder="External ID" />
+          <div class="setting-row">
+            <label for="editThumbnail">Replace thumbnail (jpg/png/gif/webm)</label>
+            <input id="editThumbnail" type="file" accept="image/png, image/jpeg, image/gif, video/webm" />
+          </div>
+          <div class="setting-row">
+            <label for="editAssetFile">Replace asset (.spak/.mp4)</label>
+            <input id="editAssetFile" type="file" />
+          </div>
+          <select id="editCategory" style="padding:8px;border-radius:6px"></select>
+          <input id="editTags" type="text" placeholder="Tags (comma separated)" />
+          <div class="setting-row" style="align-items:center;gap:10px">
+            <label for="editIsAnimated" style="margin:0">Animated (VAT/flipbook)</label>
+            <input id="editIsAnimated" type="checkbox" class="styled-checkbox" />
+          </div>
+          <div style="display:flex;gap:8px;align-items:center">
+            <button id="confirmEditBtn" class="btn" type="button">Edit Asset</button>
+            <div id="editStatus" style="color:var(--muted)"></div>
+            <button id="cancelEditBtn" class="btn" type="button">Cancel</button>
+          </div>
+  </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Password Change Modal -->
+  <div id="passwordModalOverlay" class="modal-overlay hidden" aria-hidden="true">
+    <div id="passwordModal" class="modal" role="dialog" aria-modal="true">
+      <div class="modal-header">
+        <h3>Change Password</h3>
+        <button id="passwordModalClose" class="modal-close" aria-label="Close">✕</button>
+      </div>
+      <div class="modal-content">
+        <div style="display:flex;flex-direction:column;gap:18px;width:100%;max-width:400px">
+          <div style="display:flex;flex-direction:column;gap:6px">
+            <label for="currentPassword" style="color:var(--muted);font-size:14px;font-weight:500">Current Password</label>
+            <input id="currentPassword" type="password" placeholder="Enter current password" style="padding:10px;border:1px solid var(--border);border-radius:6px;background:var(--bg);color:var(--text);font-size:14px" />
+          </div>
+          <div style="display:flex;flex-direction:column;gap:6px">
+            <label for="newPassword" style="color:var(--muted);font-size:14px;font-weight:500">New Password</label>
+            <input id="newPassword" type="password" placeholder="Enter new password" style="padding:10px;border:1px solid var(--border);border-radius:6px;background:var(--bg);color:var(--text);font-size:14px" />
+          </div>
+          <div id="passwordChangeMessage" style="display:none;padding:10px;border-radius:6px;font-size:14px"></div>
+          <div style="display:flex;gap:10px;justify-content:flex-end">
+            <button id="cancelPasswordBtn" class="btn small" style="background:var(--bg-secondary)">
+              Cancel
+            </button>
+            <button id="changePasswordBtn" class="btn small">
+              <span class="material-symbols-outlined" aria-hidden="true">lock_reset</span>
+              Change Password
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- New User Registration Modal -->
+  <div id="newUserModalOverlay" class="modal-overlay hidden" aria-hidden="true">
+    <div id="newUserModal" class="modal" role="dialog" aria-modal="true">
+      <div class="modal-header">
+        <h3>Create New User</h3>
+        <button id="newUserModalClose" class="modal-close" aria-label="Close">✕</button>
+      </div>
+      <div class="modal-content">
+        <div style="display:flex;flex-direction:column;gap:18px;width:100%;max-width:400px">
+          <div style="display:flex;flex-direction:column;gap:6px">
+            <label for="newUserUsername" style="color:var(--muted);font-size:14px;font-weight:500">Username</label>
+            <input id="newUserUsername" type="text" placeholder="Enter username" style="padding:10px;border:1px solid var(--border);border-radius:6px;background:var(--bg);color:var(--text);font-size:14px" />
+          </div>
+          <div style="display:flex;flex-direction:column;gap:6px">
+            <label for="newUserPassword" style="color:var(--muted);font-size:14px;font-weight:500">Password</label>
+            <input id="newUserPassword" type="password" placeholder="Enter password" style="padding:10px;border:1px solid var(--border);border-radius:6px;background:var(--bg);color:var(--text);font-size:14px" />
+          </div>
+          <div style="display:flex;align-items:center;gap:10px">
+            <input id="newUserIsAdmin" type="checkbox" class="styled-checkbox" />
+            <label for="newUserIsAdmin" style="color:var(--muted);font-size:14px;font-weight:500;cursor:pointer">Admin User</label>
+          </div>
+          <div id="newUserMessage" style="display:none;padding:10px;border-radius:6px;font-size:14px"></div>
+          <div style="display:flex;gap:10px;justify-content:flex-end">
+            <button id="cancelNewUserBtn" class="btn small" style="background:var(--bg-secondary)">
+              Cancel
+            </button>
+            <button id="createUserBtn" class="btn small">
+              <span class="material-symbols-outlined" aria-hidden="true">person_add</span>
+              Create User
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+      <!-- Credits overlay: hidden by default, shown after 2s hover on footer -->
+      <div id="creditsOverlay" class="credits-overlay hidden" aria-hidden="true">
+        <div class="credits-backdrop" aria-hidden="true"></div>
+        <div class="credits-container" role="dialog" aria-modal="true" aria-labelledby="creditsTitle">
+          <div class="credits-roll" aria-hidden="false">
+            <div class="credits-list" id="creditsList">
+              <div class="credits-item CreditsRole">Original Idea By</div>
+              <div class="credits-item">Saleh Nickzadeh</div>
+              <div class="credits-item"></div>
+              <div class="credits-item"></div>
+              <div class="credits-item CreditsRole">Developers</div>
+              <div class="credits-item">Matin Rezayi</div>
+              <div class="credits-item">RmaN</div>
+              <div class="credits-item"></div>
+              <div class="credits-item"></div>
+              <div class="credits-item CreditsRole">Maintainers</div>
+              <div class="credits-item">Setayesh Kavousi</div>
+              <div class="credits-item">Melika Mostofinia</div>
+              <div class="credits-item">Amirhossein Rezaei (G.O.A.T)</div>
+              <div class="credits-item">Saleh Nickzadeh</div>
+              <div class="credits-item"></div>
+              <div class="credits-item"></div>
+              <div class="credits-item CreditsRole">Model Provider</div>
+              <div class="credits-item">Faranak Moradi</div>
+              <div class="credits-item"></div>
+              <div class="credits-item"></div>
+              <div class="credits-item CreditsRole">Beta Tester</div>              
+              <div class="credits-item">Mojtaba Jahan</div>    
+              <div class="credits-item">Melika Mostofinia</div>              			  
+              <div class="credits-item">Setayesh Kavousi</div>
+
+              <div class="credits-item"></div>
+              <div class="credits-item"></div>
+              <div class="credits-item"></div>
+              <div class="credits-item"></div>
+              <div class="credits-item" id="CopyrightYear"></div>
+
+
+
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <footer id="siteFooter" class="site-footer" aria-hidden="false">Created by Virtual R&D Team | Maintained by Environment Design Team
+        <div id="snowAccum" class="snow-accum" aria-hidden="true"></div>
+      </footer>
+
+      <script>
+        // Credits overlay: click footer to toggle; click outside the credits container or press Escape to hide
+        (function(){
+          const footer = document.getElementById('siteFooter');
+          const overlay = document.getElementById('creditsOverlay');
+          const creditsList = document.getElementById('creditsList');
+          const containerEl = overlay ? overlay.querySelector('.credits-container') : null;
+          if (!footer || !overlay || !creditsList) return;
+
+          function showOverlay(){
+            if (overlay.classList.contains('visible')) return;
+            overlay.classList.remove('hidden');
+            // restart credits animation cleanly
+            creditsList.style.animation = 'none';
+            void creditsList.offsetWidth; // force reflow
+            creditsList.style.animation = null;
+            requestAnimationFrame(()=> overlay.classList.add('visible'));
+            overlay.setAttribute('aria-hidden', 'false');
+          }
+
+          function hideOverlay(){
+            if (overlay.classList.contains('hidden')) return;
+            overlay.classList.remove('visible');
+            overlay.setAttribute('aria-hidden', 'true');
+            const onTransitionEnd = (e)=>{
+              if (e.target !== overlay) return;
+              overlay.classList.add('hidden');
+              overlay.removeEventListener('transitionend', onTransitionEnd);
+            };
+            overlay.addEventListener('transitionend', onTransitionEnd);
+          }
+
+          // Toggle when footer is clicked
+          footer.addEventListener('click', (e)=>{
+            e.stopPropagation();
+            if (overlay.classList.contains('visible')) hideOverlay(); else showOverlay();
+          });
+
+          // Clicking outside the credits container hides the overlay (covers backdrop and anywhere outside container)
+          overlay.addEventListener('click', (e)=>{
+            // if click is inside the centered container, ignore
+            if (containerEl && containerEl.contains(e.target)) return;
+            hideOverlay();
+          });
+
+          // Prevent clicks inside the container from bubbling to overlay
+          if (containerEl) containerEl.addEventListener('click', (e)=>{ e.stopPropagation(); });
+
+          // Escape key hides overlay
+          document.addEventListener('keydown', (e)=>{ if (e.key === 'Escape') hideOverlay(); });
+
+          // Update copyright year
+          const Tarikh = new Date();
+          const TarikhYear = Tarikh.getFullYear();
+          const cy = document.getElementById("CopyrightYear");
+          if (cy) cy.innerHTML = "&copy; " + TarikhYear;
+        })();
+      </script>
+
+  <!-- Back to top button -->
+  <button id="backToTop" aria-label="Back to top" title="Back to top">↑</button>
+  <!-- Snow layer (handled by snow.js) -->
+  <div id="snowLayer" aria-hidden="true"></div>
+  <script src="./snow.js" defer></script>
+</body>
+</html>
+now

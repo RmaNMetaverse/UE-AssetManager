@@ -1,0 +1,923 @@
+/* Main panel loading spinner */
+.main-loading {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 180px;
+}
+.main-loading.hidden { display: none; }
+.spinner {
+  width: 38px;
+  height: 38px;
+  border: 4px solid rgba(var(--accent-rgb),0.18);
+  border-top: 4px solid var(--accent);
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+}
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+/* Make subcategory buttons look like normal text */
+.category-text {
+  all: unset;
+  cursor: pointer;
+  color: var(--muted);
+  font-size: 14px;
+  padding: 4px 0;
+  display: block;
+  width: 100%;
+  text-align: left;
+  transition: color .18s;
+}
+.category-text:hover {
+  color: var(--accent);
+}
+
+/* Highlight for selected category */
+.category-active {
+  color: var(--accent);
+  font-weight: 700;
+}
+.side-accordion > summary {
+  color: var(--muted);
+  font-size: 16px;
+  font-weight: 600;
+  padding: 6px 4px;
+  margin-left: 0;
+  width: 100%;
+  display: block;
+  text-align: left;
+  transition: color .18s;
+}
+:root{
+  /* Warm, harmonious theme tuned for the yellow/orange accent */
+  --bg:#0b0f10;         /* page background (neutral charcoal) */
+  --panel:#0f1313;      /* panels / suggestion background */
+  --surface:#0e1212;    /* search input and subtle surfaces */
+  --card:#0c1111;       /* card thumbnail background */
+  --muted:rgba(255,255,255,0.7);
+  --tag-bg:rgba(255,255,255,0.04);
+  --accent:#19c9bd;     /* primary teal accent (muted) */
+  --accent-strong:#26e6cc; /* slightly less intense strong accent */
+  /* RGB forms used for rgba(...) so shadows and glows follow the accent */
+  --accent-rgb: 25,201,189;
+  --accent-strong-rgb: 38,230,204;
+  /* Liquid glass defaults (opacity values expressed 0..1) */
+  --liquid-opacity: 0.06;
+  --liquid-tint-alpha: 0.08;
+  --liquid-btn-alpha: 0.14;
+  --sheen-angle: 8.5deg;         /* rotation of the rectangle */
+  --sheen-width: 50%;          /* pseudo-element width (relative to button) */
+  --sheen-height: 220%;        /* pseudo-element height */
+  --sheen-start-x: -120%;      /* starting translateX value */
+  --sheen-end-x: 25%;         /* ending translateX value on hover */
+  --sheen-duration: .5s;       /* animation duration */
+  --sheen-ease: cubic-bezier(.2,.8,.2,1);
+}
+*{box-sizing:border-box;font-family:Inter,Segoe UI,Helvetica,Arial,sans-serif}
+html,body{height:100%;width:100%;margin:0;background:var(--bg);color:#e6eef6;}
+.topbar{display:flex;align-items:center;gap:16px;padding:18px 24px}
+.main-panel .topbar{
+  position:sticky;
+  top:0; /* stick to the top of the viewport */
+  z-index:800; /* above content but below global overlays */
+  background: #0b0f10;
+  backdrop-filter: blur(6px);
+}
+.topbar h1{margin:0;font-size:15px;font-weight:600; color: rgba(255, 255, 255, 0.445);}
+/* Search wrapper for search input and suggestions */
+.search-wrap{position:relative;flex:1;max-width:580px}
+
+/* Hide native search cancel button in WebKit browsers so we can use a custom one */
+input[type="search"]::-webkit-search-cancel-button { -webkit-appearance: none; appearance: none; }
+
+/* Custom search clear button placed on the far right of the search input */
+.search-clear{
+  position:absolute;
+  right:8px;
+  top:50%;
+  transform:translateY(-50%);
+  -webkit-appearance:none;
+  appearance:none;
+  border:0;
+  background:transparent;
+  color:var(--accent);
+  cursor:pointer;
+  width:28px;
+  height:28px;
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  border-radius:6px;
+  font-size:14px;
+  /* Prevent any animations or transitions so the button doesn't react on hover */
+  transition: none !important;
+}
+.search-clear.hidden{display:none}
+/* Make hover/focus/active look identical to normal state (no movement, no glow) */
+.search-clear:hover,
+.search-clear:focus,
+.search-clear:active{
+  transform: translateY(-50%) !important;
+  background: transparent !important;
+  color: var(--accent) !important;
+  box-shadow: none !important;
+  filter: none !important;
+  outline: none !important;
+}
+#searchInput{width:100%;padding:10px 12px;border-radius:8px;border:1px solid rgba(255,255,255,0.06);background:var(--surface);color:var(--muted)}
+#searchInput{width:100%;padding:10px 12px;border-radius:8px;border:1px solid rgba(255,255,255,0.06);background:var(--surface);color:var(--muted)}
+.suggestions{position:absolute;left:0;right:0;top:44px;background:var(--panel);border:1px solid rgba(255,255,255,0.04);border-radius:8px;padding:6px;z-index:30;max-height:240px;overflow:auto}
+.suggestion{padding:8px 10px;border-radius:6px;cursor:pointer}
+.suggestion:hover{background:rgba(255,255,255,0.02)}
+.hidden{display:none}
+.active-tags{display:flex;gap:8px;align-items:center}
+/* Tag chip (active tag pill) */
+.tag-chip{background:var(--tag-bg);color:var(--muted);padding:6px 8px;border-radius:999px;font-size:13px;opacity:0.95;display:inline-flex;gap:8px;align-items:center}
+.tag-chip button{background:transparent;border:0;color:var(--muted);cursor:pointer;margin-left:6px}
+/* Selected/active visual */
+.tag-chip.selected{background: linear-gradient(180deg,var(--accent),var(--accent-strong));color:#031022;font-weight:700;box-shadow:0 6px 18px rgba(36,248,230,0.12)}
+.tag-chip.selected button{color:#031022}
+/* Clear-tags button shown next to active tags when there are many tags selected */
+.clear-tags-btn{
+  margin-left:8px;
+  /* match selected tag chip styling */
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  gap:8px;
+  background: linear-gradient(180deg,var(--accent),var(--accent-strong));
+  color: #031022;
+  font-weight:700;
+  padding:6px 10px;
+  border-radius:999px;
+  border:0;
+  box-shadow:0 6px 18px rgba(36,248,230,0.12);
+  cursor:pointer;
+  font-size:13px;
+  align-self:center;
+}
+.clear-tags-btn:hover{ filter:brightness(1.03); transform:translateY(-2px); }
+/* Modern styled scrollbar (WebKit + Firefox). Keeps scrolling functional. */
+html, body {
+  -ms-overflow-style: auto; /* Edge/IE: show native scrollbar */
+  scrollbar-width: thin; /* Firefox: thin scrollbar */
+  scrollbar-color: var(--accent) transparent; /* Firefox thumb and track */
+}
+
+/* WebKit browsers (Chrome, Safari, Edge Chromium) */
+html::-webkit-scrollbar, body::-webkit-scrollbar {
+  width: 7px;
+  height: 10px;
+}
+html::-webkit-scrollbar-track, body::-webkit-scrollbar-track {
+  background: transparent;
+}
+html::-webkit-scrollbar-thumb, body::-webkit-scrollbar-thumb {
+  background: linear-gradient(180deg,var(--accent-strong),var(--accent));
+  border-radius: 10px;
+}
+html::-webkit-scrollbar-thumb:hover, body::-webkit-scrollbar-thumb:active {
+  background: linear-gradient(180deg,var(--accent),var(--accent-strong));
+}
+
+.controls{padding:0 24px}
+.grid{padding:18px 24px;display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:16px}
+/* Respect user-set card min width via --card-min (added slider control). Default 220px */
+.grid{grid-template-columns:repeat(auto-fill,minmax(var(--card-min,220px),1fr));}
+.card{background:linear-gradient(180deg,rgba(255,255,255,0.02),transparent);border:1px solid rgba(255,255,255,0.03);padding:10px;border-radius:10px;display:flex;flex-direction:column}
+.card.custom-sort-card{cursor:grab;border-color:rgba(var(--accent-rgb),0.22)}
+.card.custom-sort-card:active{cursor:grabbing}
+.card.custom-sort-dragging{opacity:.42;transform:scale(.98);box-shadow:0 0 0 2px var(--accent)}
+.grid.custom-sort-saving{pointer-events:none;opacity:.82}
+.custom-sort-notice{margin-top:14px;padding:10px 12px;border:1px solid rgba(var(--accent-rgb),.25);border-radius:9px;background:rgba(var(--accent-rgb),.07);display:flex;align-items:center;gap:9px;color:var(--muted);font-size:13px}
+.custom-sort-notice .material-symbols-outlined{color:var(--accent)}
+.custom-sort-notice #customSortStatus{margin-left:auto;color:var(--accent);font-weight:700}
+.custom-sort-notice #customSortStatus.error{color:#ff6b6b}
+.custom-sort-notice .btn{width:auto;margin:0;padding:7px 14px}
+.thumb{width:100%;aspect-ratio:1/1;background:var(--card);border-radius:8px;display:flex;align-items:center;justify-content:center;overflow:hidden;position:relative}
+.thumb img{width:100%;height:100%;object-fit:cover;transition:transform .28s ease,filter .28s ease}
+
+/* zoom thumbnail image when hovering the card (smooth transition) */
+.card:hover .thumb img{transform:scale(1.1);filter:brightness(1.08)}
+.card .meta{margin-top:10px;display:flex;flex-direction:column;gap:6px}
+
+.asset-name{
+  font-weight:600;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  transition: color .18s ease;
+}
+
+/* Tooltip used for copy confirmations (small, subtle) */
+.copy-tooltip{position:absolute;z-index:40;background:rgba(0,0,0,0.75);color:#fff;padding:4px 6px;border-radius:4px;font-size:11px;pointer-events:none}
+
+/* Error text style for status messages */
+.error-text{color:#ff6b6b;font-weight:700}
+
+/* Back-to-top button */
+#backToTop{position:fixed;right:18px;bottom:45px;width:44px;height:44px;border-radius:25px;border:0;background:var(--accent);color:#031022;display:flex;align-items:center;justify-content:center;font-size:20px;box-shadow:0 8px 24px rgba(0,0,0,0.28);cursor:pointer;opacity:0;transform:translateY(8px);transition:opacity .22s ease,transform .22s ease;z-index:80;pointer-events:none}
+#backToTop.visible{opacity:1;transform:translateY(0);pointer-events:auto}
+#backToTop:focus{outline:2px solid rgba(255,255,255,0.12);outline-offset:3px}
+
+
+.tag-list{display:flex;gap:8px;flex-wrap:nowrap;margin-top:3px;overflow-x:auto;padding-bottom:6px;-webkit-overflow-scrolling:touch}
+/* hide scrollbar visually but keep scrolling/draggable behavior */
+.tag-list::-webkit-scrollbar{display:none;height:0}
+.tag-list{ -ms-overflow-style: none; scrollbar-width: none;}
+.tag-list::-webkit-scrollbar-thumb{background:linear-gradient(180deg,var(--accent-strong),var(--accent));border-radius:8px}
+.tag-small{font-size:12px;padding:4px 6px;border-radius:6px;background:var(--tag-bg);color:var(--muted);opacity:0.9;flex:0 0 auto;white-space:nowrap}
+
+/* Category-derived tag shown before asset tags. Non-clickable and slightly emphasized. */
+.tag-small.category-tag{ cursor:default; background: rgba(255,255,255,0.02); font-weight:600; color:var(--muted); opacity:0.95 }
+
+/* drag cursor and dragging state only for lists marked draggable */
+.tag-list.draggable{cursor:grab}
+.tag-list.draggable.dragging{cursor:grabbing;user-select:none}
+.tag-more{opacity:0.85;font-weight:600}
+.card-foot{display:flex;flex-direction:column;gap:8px;margin-top:8px}
+.btn{background:var(--accent);border:0;color:#031022;padding:8px;margin-top: 10px; border-radius:8px;cursor:pointer;font-weight:700;width:100%;}
+.asset-id{color:var(--muted);font-size:13px}
+/* Move hover effect from asset name to asset id */
+.asset-id .id-text{cursor:default}
+/* Hover applies only when hovering the actual id text */
+.asset-id .id-text:hover{color:var(--accent);cursor:pointer}
+.counts{color:var(--muted);font-size:13px; margin-top: 2vh;}
+.empty{padding:32px;text-align:center;color:var(--muted)}
+.main-panel{
+    margin-left: 2%;
+    margin-right: 2%;
+    margin-top: 30px;
+}
+
+/* Topbar settings button */
+.topbar-actions{display:flex;align-items:center}
+.top-settings{ font-family: Inter, Segoe UI, Helvetica, Arial, sans-serif;font-weight: 100;letter-spacing: 0.5px; background:transparent;border:1px solid rgba(255,255,255,0.06);color:var(--muted);width:100px;height:36px;padding:0;border-radius:999px;cursor:pointer;display:inline-flex;align-items:center;justify-content:center;position:relative; padding-left: 55px; padding-right: 55px;}
+.top-settings .material-symbols-outlined{font-size:18px; margin-right: 5px;}
+.top-settings:hover{background:rgba(255,255,255,0.02);}
+.top-settings:disabled{cursor:default;opacity:.72}
+.top-settings.custom-order-active{border-color:rgba(var(--accent-rgb),.2);color:var(--accent)}
+
+/* Disable upward hover animation for all buttons: prevent translate/transform and filter changes
+   This uses !important to ensure it overrides component-specific hover rules that move buttons visually. */
+button:hover, .btn:hover, .fav-star:hover, .clear-tags-btn:hover, .tag-chip button:hover, .top-settings:hover, .user-avatar:hover, .user-avatar-menu-item:hover {
+  transform: none !important;
+  filter: none !important;
+}
+
+/* When placed inside the search-wrap, position absolutely to the right edge */
+.in-search{position:absolute;right:10px;top:50%;transform:translateY(-50%);z-index:40}
+#searchInput{padding-right:44px}
+
+/* Right-align wrapper for topbar buttons inserted by markup */
+#topbar-buttons-wrap{display:flex;align-items:center;gap:8px;margin-left:auto}
+
+/* Sort label styling to match UI */
+#topbar-buttons-wrap > span > span:first-child {
+  font-family: Inter, Segoe UI, Helvetica, Arial, sans-serif;
+  font-weight: 400;
+  letter-spacing: 0.5px;
+  color: var(--muted);
+  font-size: 14px;
+}
+
+/* User avatar (small circle with initial) */
+.user-avatar-wrap{position:relative;display:flex;align-items:center;position:relative;left: 4%;}
+.user-avatar{width:36px;height:36px;border-radius:50%;display:inline-flex;align-items:center;justify-content:center;background:linear-gradient(180deg,var(--accent-strong),var(--accent));color:#031022;font-weight:800;border:0;cursor:pointer;font-size:14px}
+.user-avatar:focus{outline:2px solid rgba(var(--accent-rgb),0.14)}
+.user-avatar-menu{position:absolute;right:0;top:calc(100% + 8px);background:var(--panel);border:1px solid rgba(255,255,255,0.04);padding:8px;border-radius:8px;box-shadow:0 12px 40px rgba(2,12,24,0.6);min-width:140px;z-index:120}
+.user-avatar-menu.hidden{display:none}
+.user-avatar-menu-item{display:block;width:100%;background:transparent;border:0;color:var(--muted);padding:8px 10px;text-align:left;border-radius:6px;cursor:pointer;text-align: center;}
+.user-avatar-menu-item:hover{background:rgba(255,255,255,0.02);color:var(--accent)}
+
+@media (max-width:640px){
+  .user-avatar{width:32px;height:32px;font-size:13px}
+}
+
+/* Layout with left side panel */
+.layout{display:flex;gap:18px;align-items:flex-start}
+.side-panel{flex:0 0 15%;min-width:160px;background:var(--panel);padding:12px;border:1px solid rgba(255,255,255,0.02);position:sticky;top:0px;height:100vh;overflow:auto;transition:width .28s ease, min-width .28s ease}
+.side-panel{flex:0 0 15%;min-width:160px;background:var(--panel);padding:12px;border:1px solid rgba(255,255,255,0.02);position:sticky;top:0px;height:100vh;overflow:auto;transition:width .28s ease, min-width .28s ease, flex-basis .28s ease}
+
+/* Side panel collapsed state */
+.side-panel.collapsed{flex:0 0 54px;/* shrink whole panel to fixed width */
+  width:54px;min-width:54px;padding-left:6px;padding-right:6px;overflow:visible}
+.side-panel.collapsed .side-inner{opacity:0;pointer-events:none}
+.side-panel.collapsed .side-inner{display:none}
+.side-panel.collapsed .side-label{display:none}
+.side-panel.collapsed .side-accordion-container{display:none}
+
+@media (max-width:900px){
+  .side-panel{position:static;height:auto;width:100%;min-width:0}
+}
+.side-inner{padding:8px;display:flex;flex-direction:column;height:100%}
+.side-panel h3{margin:0 0 8px 0}
+.main-panel{flex:1;min-width:0}
+
+/* Side panel label and accordion */
+.side-label{font-size:30px;font-weight:700;color:var(--muted);padding:8px 6px;margin-bottom:6px; margin-top: 18px;font-family: monospace;}
+
+.side-accordion{background:transparent;border-radius:8px;padding:6px;margin-bottom:6px;color:var(--muted);position:relative}
+.side-accordion summary{list-style:none;cursor:pointer;padding:6px 4px;font-weight:600;display:block}
+.side-accordion[open] summary{color:var(--accent)}
+
+.side-accordion-container{
+  margin-top: 40px;
+  margin-left: 10px;
+}
+
+/* Divider used to separate categories from other side-panel sections (Favorites, footer) */
+.side-divider{
+    height: 3px;
+    background: linear-gradient(90deg, rgba(var(--accent-rgb), 0.06), rgba(var(--accent-rgb), 0.14), rgba(var(--accent-rgb), 0.06));
+    margin: 20px 12px 20px 12px;
+    border-radius: 2px;
+}
+
+.side-footer{margin-top:auto;padding:8px 6px;border-top:2px solid rgba(255, 255, 255, 0.041);display:flex;flex-direction:column;gap:8px;position:relative}
+.side-footer button#settingsBtn{background:transparent;border:1px solid rgba(255,255,255,0.04);color:var(--muted);padding:8px;border-radius:8px;cursor:pointer}
+.side-footer button#settingsBtn:hover{background:rgba(255, 255, 255, 0.048)}
+
+/* Popup anchored to bottom of side-panel */
+.settings-popup{position:absolute;left:12px;right:12px;bottom:calc(100% + 8px);background:linear-gradient(180deg, rgba(255,255,255,0.10), rgba(255,255,255,0.06));border:1px solid rgba(255,255,255,0.08);padding:12px;border-radius:10px;box-shadow:0 12px 30px rgba(2,12,24,0.6), 0 6px 18px rgba(var(--accent-rgb),0.06);transform:translateY(6px);opacity:0;pointer-events:none;transition:opacity .18s ease,transform .18s ease;z-index:120}
+.side-panel .settings-popup[aria-hidden="false"]{opacity:1;transform:translateY(0);pointer-events:auto}
+.settings-popup h4{margin:0 0 8px 0;font-size:14px}
+.setting-row{display:flex;justify-content:space-between;align-items:center;padding:8px 0;border-top:1px dashed rgba(255,255,255,0.02)}
+.setting-row:first-of-type{border-top:0;padding-top:4px}
+#modal .setting-row .btn.small{margin-top:7px}
+
+/* Icon sizing inside small buttons */
+.modal .btn.small .material-symbols-outlined,
+.top-settings .material-symbols-outlined{font-size:16px;vertical-align:middle;margin-right:8px;}
+.btn.small{padding:6px 8px;font-size:13px;border-radius:6px}
+
+#sortToggle{
+  /* Compact icon-only button: size fits the icon and won't stretch to match other buttons */
+  padding: 6px;
+  width: 36px;
+  height: 36px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 8px;
+  font-size: 20px; /* controls icon size (Material Symbols inherit font-size) */
+}
+/* Ensure icon spans inside compact sort button don't add extra right margin
+  Use an ID selector so this rule has higher specificity than the general
+  `.modal .btn.small .material-symbols-outlined` rule (which was adding 8px).
+*/
+#sortToggle .sortArrow{ margin-right: 0px; }
+
+/* Make the unified mobile toggle visually match the compact sort button on larger screens
+   Provide base styles (applies at all sizes). Mobile-specific overrides remain inside the
+   `@media (max-width:900px)` block above. */
+.mobile-side-toggle{
+  /* match #sortToggle compact dimensions and interactive affordances */
+  padding:6px;
+  width:36px;
+  height:36px;
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  border-radius:8px;
+  font-size:20px; /* controls icon size */
+  background:transparent;
+  /* visible, subtle border to match other topbar/action buttons */
+  border:1px solid rgba(255,255,255,0.04);
+  color:var(--muted);
+  cursor:pointer; /* hand pointer on hover */
+  transition:box-shadow .18s ease, transform .12s ease, background .12s ease;
+}
+.mobile-side-toggle .material-symbols-outlined{ margin-right: 0px; font-size:20px; line-height:1 }
+.mobile-side-toggle:hover{
+  /* subtle hover affordance similar to other action buttons */
+  box-shadow:0 12px 30px rgba(var(--accent-rgb),0.06);
+  background:rgba(255,255,255,0.02);
+}
+.mobile-side-toggle:active{ transform:translateY(0.5px) scale(0.995); }
+.mobile-side-toggle:focus{ outline:2px solid rgba(var(--accent-rgb),0.18); outline-offset:2px; }
+
+/* Smooth accordion content: collapse/expand by animating max-height */
+.side-accordion ul{margin:6px 0 0 0;padding:0;list-style:none;max-height:0;overflow:hidden;transition:max-height .28s ease;position:relative;padding-left:18px}
+.side-accordion[open] ul{max-height:360px}
+
+/* Vertical line beside subgroup items */
+.side-accordion ul::before{content:'';position:absolute;left:6px;top:0;bottom:0;width:2px;border-radius:2px;background:var(--accent);opacity:0.6}
+.side-accordion li{padding:8px 0 8px 12px;font-size:13px;color:var(--muted)}
+
+@media (max-width:900px){
+  .layout{flex-direction:column}
+  .side-panel{width:100%;position:static;height:auto;overflow:visible}
+  .main-panel{width:100%;margin-left:0;margin-right:0}
+}
+
+/* Mobile-specific responsive behavior: use an overlay menu instead of placing the side panel above content */
+@media (max-width:900px){
+  .layout{flex-direction:column}
+  /* hide the side-panel from document flow by default on mobile; it will open as an overlay */
+  .side-panel{display:none !important}
+
+  /* Mobile hamburger toggle button inserted by JS */
+  .mobile-side-toggle{
+    display:inline-flex;
+    align-items:center;
+    justify-content:center;
+    width:36px;
+    height:36px;
+    padding:6px;
+    border-radius:8px;
+    border:1px solid rgba(255,255,255,0.04);
+    background:transparent;
+    color:var(--muted);
+    cursor:pointer;
+    margin-right:6px;
+  }
+  .mobile-side-toggle .material-symbols-outlined{font-size:20px;line-height:1}
+
+  /* backdrop overlay shown when side panel is open */
+  #mobileSideOverlay{position:fixed;inset:0;background:rgba(0,0,0,0.5);z-index:2000;display:none}
+  #mobileSideOverlay:not(.hidden){display:block}
+
+  /* when the side panel is opened on mobile, position it as a fixed overlay */
+  .side-panel.mobile-open{
+    display:block !important;
+    position:fixed;
+    left:0;top:0;
+    height:100%;
+    width:280px;
+    max-width:85%;
+    z-index:2100;
+    transform:translateX(0);
+    box-shadow:0 30px 80px rgba(2,12,24,0.85);
+    overflow:auto;
+    background:var(--panel);
+  }
+  /* ensure the side panel when hidden by default doesn't affect layout */
+  .side-panel.mobile-hidden-by-default{display:none !important}
+}
+
+/* Modal overlay and centered modal */
+.modal-overlay{position:fixed;inset:0;background:rgba(2,6,10,0.6);display:flex;align-items:center;justify-content:center;z-index:9999}
+.modal{background:linear-gradient(180deg,#0f1415, #0c1112);border:1px solid rgba(255,255,255,0.08);padding:0;border-radius:12px;max-width:720px;width:92%;box-shadow:0 30px 80px rgba(2,12,24,0.85), 0 12px 40px rgba(var(--accent-rgb),0.06);position:relative}
+.modal-content{color:var(--muted);padding:18px}
+.modal-header{display:flex;align-items:center;justify-content:space-between;padding:8px 18px;border-bottom:1px solid rgba(255,255,255,0.03)}
+.modal-header h3{margin:0;font-size:15px;font-weight:700;text-transform:uppercase;letter-spacing:0.6px;color:var(--muted)}
+.modal-close{background:transparent;border:0;color:var(--muted);font-size:16px;cursor:pointer;padding:6px;border-radius:6px;}
+.modal .setting-row{display:flex;justify-content:space-between;align-items:center;padding:12px 0;border-top:1px dashed rgba(255,255,255,0.03)}
+.modal .setting-row:first-of-type{border-top:0;padding-top:0}
+.modal-overlay.hidden{display:none}
+
+/* Admin modal header icon */
+.admin-header-icon{font-size:22px;vertical-align:middle;margin-right:8px}
+.custom-sort-admin-row{display:flex;align-items:center;justify-content:space-between;gap:18px;margin-bottom:16px;padding:12px 14px;border:1px solid rgba(var(--accent-rgb),.16);border-radius:9px;background:rgba(var(--accent-rgb),.045)}
+.custom-sort-admin-row label{display:block;color:var(--muted);font-weight:700;cursor:pointer}
+.custom-sort-help{font-size:12px;line-height:1.45;margin-top:4px;color:rgba(255,255,255,.55)}
+.custom-sort-admin-row .styled-checkbox{flex:0 0 20px}
+
+/* Admin upload form styling - make the form match the app's UI */
+.modal-content form#adminUploadForm{max-width:680px;margin:6px auto 0;display:flex;flex-direction:column;gap:12px}
+.modal-content form#adminUploadForm label[for]{font-size:13px;color:var(--muted);font-weight:700;margin-bottom:6px}
+.modal-content input[type="text"], .modal-content input[type="number"], .modal-content select, .modal-content input[type="file"]{
+  width:100%;padding:10px 12px;border-radius:8px;border:1px solid rgba(255,255,255,0.06);background:var(--surface);color:var(--muted);font-size:14px
+}
+.modal-content input[type="file"]{padding:8px 10px}
+.modal-content .setting-row{display:block;gap:12px;padding:16px 0;border-top:1px dashed rgba(255,255,255,0.03)}
+.modal-content .setting-row:first-of-type{border-top:0}
+.modal-content .setting-row .setting-label{display:block;margin-bottom:20px}
+
+/* Custom styled checkbox */
+.checkbox-wrapper{
+  display:inline-flex;
+  align-items:center;
+  gap:10px;
+  cursor:pointer;
+}
+.styled-checkbox{
+  appearance:none;
+  -webkit-appearance:none;
+  width:20px;
+  height:20px;
+  border:2px solid rgba(255,255,255,0.2);
+  border-radius:4px;
+  background:rgba(255,255,255,0.03);
+  cursor:pointer;
+  position:relative;
+  transition:all 0.2s ease;
+}
+.styled-checkbox:checked{
+  background:var(--accent);
+  border-color:var(--accent);
+}
+.styled-checkbox:checked::after{
+  content:'✓';
+  position:absolute;
+  top:50%;
+  left:50%;
+  transform:translate(-50%,-50%);
+  color:#031022;
+  font-size:14px;
+  font-weight:bold;
+}
+.styled-checkbox:hover{
+  border-color:rgba(255,255,255,0.4);
+}
+.styled-checkbox:focus{
+  outline:2px solid rgba(var(--accent-rgb),0.3);
+  outline-offset:2px;
+}
+.checkbox-label{
+  color:var(--muted);
+  font-size:14px;
+  user-select:none;
+}
+
+/* File-input friendly layout for thumbnail + asset file rows */
+.modal-content .setting-row input[type="file"]{background:linear-gradient(180deg, rgba(255,255,255,0.008), transparent);border-radius:8px}
+
+/* Upload button group */
+.modal-content #uploadBtn{min-width:140px;padding:10px 14px;border-radius:8px;font-weight:800; text-align: center;}
+
+/* Admin actions group: show buttons in one line */
+#adminActions{display:flex;flex-direction:row;gap:12px;align-items:center}
+#adminActions .btn.small{padding:8px 12px}
+#adminActions .btn{flex:1;width:auto;min-width:0}
+/* Ensure all admin action buttons have the same two-row height and allow wrapping */
+#adminActions .btn{
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  text-align:center;
+  white-space:normal; /* allow text to wrap onto a second line */
+  word-break:break-word;
+  line-height:1.1;
+  min-height:56px; /* height to accommodate two lines comfortably */
+  padding:8px 12px; /* ensure consistent padding */
+}
+/* On small screens, stack the buttons vertically */
+@media (max-width:640px){
+  #adminActions{flex-direction:column}
+  #adminActions .btn{width:100%}
+}
+.modal-content #uploadBtn:hover{box-shadow:0 12px 30px rgba(var(--accent-rgb),0.08)}
+
+/* Status text next to upload button */
+.modal-content #uploadStatus{color:var(--muted);font-size:13px;min-height:20px;align-self:center}
+
+/* Make the modal form feel denser on small screens */
+@media (max-width:640px){
+  .modal-content .setting-row label{display:block;flex:unset;max-width:100%;margin-bottom:6px}
+  .modal-content .setting-row input, .modal-content .setting-row select{max-width:100%}
+  .modal{max-width:96%;width:96%}
+}
+
+/* Color swatches for accent picker */
+.color-swatch{width:36px;height:36px;border-radius:8px;border:1px solid rgba(255,255,255,0.06);cursor:pointer;padding:0;box-shadow:inset 0 -6px 12px rgba(0,0,0,0.25);position:relative;display:inline-flex;align-items:center;justify-content:center}
+.color-swatch{transition: transform .14s ease, box-shadow .18s ease, outline .12s ease}
+.color-swatch:focus{outline:2px solid rgba(255,255,255,0.08);}
+.color-swatch.active{
+  transform: none;
+  border: none;
+  box-shadow: 0 8px 24px rgba(0,0,0,0.55);
+}
+.color-swatch.active::after{
+  content: '✓';
+  position:absolute; /* center inside the swatch */
+  inset:0;display:flex;align-items:center;justify-content:center;
+  color: rgba(255,255,255,0.98);
+  font-weight:800;
+  font-size:20px; /* larger tick */
+  line-height:1;
+  text-shadow:0 2px 6px rgba(0,0,0,0.6);
+  pointer-events:none;
+}
+.btn.small{min-width:80px}
+
+.theme-row{gap:12px;padding:12px 0}
+.theme-row #colorSwatches{gap:6px}
+.theme-row .color-swatch{width:34px;height:34px;border-radius:7px}
+
+/* Accent-controlled range slider for RGB speed */
+#accentRgbSpeed{
+  -webkit-appearance:none; appearance:none;
+  height:8px; width:100%; background:transparent; cursor:pointer;
+}
+
+/* Asset size horizontal slider styling inside #controls */
+#assetSizeControl{display:flex;align-items:center}
+#assetSizeSlider{
+  -webkit-appearance:none; appearance:none;
+  width:180px; height:8px; /* thin horizontal slider */
+  cursor: pointer;
+  background: transparent;
+}
+#assetSizeSlider:focus{outline:none}
+
+/* track and thumb */
+#assetSizeSlider::-webkit-slider-runnable-track{ height:8px; background:linear-gradient(90deg, rgba(255,255,255,0.06), rgba(255,255,255,0.06)); border-radius:8px }
+#assetSizeSlider::-webkit-slider-thumb{ -webkit-appearance:none; appearance:none; width:16px; height:16px; border-radius:50%; background:var(--accent); border:2px solid rgba(0,0,0,0.45); margin-top:-4px; box-shadow:0 8px 20px rgba(var(--accent-rgb),0.12) }
+#assetSizeSlider::-moz-range-track{ height:8px; background:linear-gradient(90deg, rgba(255,255,255,0.06), rgba(255,255,255,0.06)); border-radius:8px }
+#assetSizeSlider::-moz-range-thumb{ width:16px; height:16px; border-radius:50%; background:var(--accent); border:2px solid rgba(0,0,0,0.45); box-shadow:0 8px 20px rgba(var(--accent-rgb),0.12) }
+
+/* Small label style in controls */
+.asset-size-wrap div{font-size:12px}
+#accentRgbSpeed:focus{outline:none}
+
+/* WebKit track */
+#accentRgbSpeed::-webkit-slider-runnable-track{
+  height:8px; border-radius:6px; background:rgba(255,255,255,0.06);
+}
+#accentRgbSpeed::-webkit-slider-thumb{
+  -webkit-appearance:none; appearance:none; width:16px; height:16px; border-radius:50%;
+  background:var(--accent); border:2px solid rgba(0,0,0,0.55);
+  margin-top:-4px; box-shadow:0 8px 20px rgba(var(--accent-rgb),0.12);
+}
+
+/* Firefox */
+#accentRgbSpeed::-moz-range-track{ height:8px; background:rgba(255,255,255,0.06); border-radius:6px }
+#accentRgbSpeed::-moz-range-thumb{ width:16px; height:16px; border-radius:50%; background:var(--accent); border:2px solid rgba(0,0,0,0.55); box-shadow:0 8px 20px rgba(var(--accent-rgb),0.12); }
+
+/* Show a filled track using accent color for the left side (using background via JS could be improved); provide a subtle glow when focused */
+#accentRgbSpeed:focus::-webkit-slider-thumb, #accentRgbSpeed:active::-webkit-slider-thumb{ box-shadow:0 10px 26px rgba(var(--accent-rgb),0.18) }
+#accentRgbSpeed:focus::-moz-range-thumb, #accentRgbSpeed:active::-moz-range-thumb{ box-shadow:0 10px 26px rgba(var(--accent-rgb),0.18) }
+
+/* Smooth transition when accent changes */
+:root, :root *{transition: color .18s ease, background-color .18s ease, border-color .18s ease}
+
+/* Interactions & hover effects */
+.card{transition:box-shadow .18s cubic-bezier(.2,.9,.2,1),background-color .22s ease,border-color .22s ease;will-change:box-shadow,background-color}
+.card:hover{box-shadow:0 18px 40px rgba(2,12,24,0.6), 0 8px 26px rgba(var(--accent-rgb),0.12);background:linear-gradient(180deg, rgba(var(--accent-rgb),0.04), rgba(255,255,255,0.01));border-color:rgba(var(--accent-rgb),0.12)}
+
+/* Multi-selection visual state for cards selected by Shift+click */
+.card.multi-selected{outline:3px solid var(--accent);outline-offset:4px;box-shadow:0 18px 40px rgba(2,12,24,0.6), 0 12px 40px rgba(var(--accent-rgb),0.18);border-color:rgba(var(--accent-rgb),0.14);}
+.card.multi-selected .thumb{box-shadow:0 6px 18px rgba(var(--accent-rgb),0.10);}
+.card.multi-selected::after{
+  content: '✓';
+  position: absolute;
+  right: 12px;
+  top: 12px;
+  background: linear-gradient(180deg,var(--accent),var(--accent-strong));
+  color: #031022;
+  font-weight:900;
+  width:22px;height:22px;border-radius:50%;display:flex;align-items:center;justify-content:center;box-shadow:0 6px 18px rgba(var(--accent-rgb),0.12);
+}
+.btn{transition: background-color .3s ease;}
+.btn:hover{background-color: var(--accent-strong);}
+.btn:active{box-shadow:none}
+.tag-small{transition:opacity .12s ease}
+.tag-small:hover{opacity:1}
+.tag-chip{transition:box-shadow .12s ease,opacity .12s}
+.tag-chip:hover{opacity:1}
+.suggestion{transition:background .12s ease}
+.suggestion:hover{background:rgba(255,255,255,0.02)}
+#searchInput:focus{outline:none;box-shadow:0 8px 30px rgba(var(--accent-rgb),0.08);border-color:rgba(var(--accent-rgb),0.28)}
+@media (max-width:640px){.topbar{flex-direction:column;align-items:stretch}.grid{padding:10px}}
+
+/* Thumbnail zoom (+) button */
+.thumb-zoom{position:absolute;right:8px;bottom:8px;width:25px;height:25px;border-radius:6px;border:0;background: #d4d4d463;;color:#031022;font-weight:900;cursor:pointer;display:flex;align-items:center;justify-content:center;box-shadow:0 4px 14px rgba(var(--accent-rgb),0.2);opacity:0.95;padding:0}
+.thumb-zoom:hover{filter:brightness(1.06)}
+.thumb-zoom:active{transform:translateY(1px)}
+
+/* Accent glow for import/upload/admin action buttons */
+/* Import buttons inside cards */
+.card-foot .btn{
+  transition: transform .14s ease, box-shadow .22s ease, background-color .18s ease, filter .18s ease;
+}
+.card-foot .btn:hover{
+  transform:translateY(-2px) scale(1.2);
+  /* small glow all around the button */
+  box-shadow:
+    0 0 35px rgba(var(--accent-rgb),0.55),
+    0 0 8px rgba(var(--accent-rgb),0.25),
+    0 4px 12px rgba(0,0,0,0.2);
+}
+
+/* Sheen feature removed: neutralize any shiny pseudo-elements so buttons only scale on hover. */
+.btn.shiny{ position: static; overflow: visible; }
+.btn.shiny::after,
+.btn.shiny::before{
+  display: none !important;
+  content: none !important;
+  opacity: 0 !important;
+  transition: none !important;
+}
+
+/* Ensure non-liquid-glass import buttons visibly scale on hover (force with higher priority). */
+.card-foot .btn.shiny:hover,
+.card-foot .btn:hover{
+  transform: translateY(-2px) scale(1.06) !important;
+}
+
+/* Admin action buttons: New / Edit / Delete and Upload (in admin) */
+#newAssetBtn,#editAssetBtn,#deleteAssetBtn,#uploadBtn,#replaceTagsBtn,#backupDbBtn{
+  transition: transform .14s ease, box-shadow .22s ease, background-color .18s ease, filter .18s ease;
+}
+#newAssetBtn:hover,#editAssetBtn:hover,#deleteAssetBtn:hover,#uploadBtn:hover,#replaceTagsBtn:hover,#backupDbBtn:hover{
+  transform:translateY(-4px);
+  box-shadow:
+    0 30px 80px rgba(var(--accent-rgb),0.26),
+    0 12px 40px rgba(var(--accent-rgb),0.20),
+    0 0 32px rgba(var(--accent-rgb),0.30);
+  filter: drop-shadow(0 0 18px rgba(var(--accent-rgb),0.22));
+}
+
+/* Ensure material symbol inside zoom button is properly sized and centered */
+.thumb-zoom .material-symbols-outlined{font-size:16px;line-height:1;display:block;text-align:center}
+
+/* Fullscreen image viewer */
+.image-viewer-overlay{position:fixed;inset:0;background:rgba(2,6,10,0.86);display:flex;align-items:center;justify-content:center;z-index:10000}
+.image-viewer-overlay.hidden{display:none}
+.image-viewer-img{max-width:92vw;max-height:92vh;box-shadow:0 30px 80px rgba(2,12,24,0.85), 0 12px 40px rgba(var(--accent-rgb),0.12);border-radius:10px;cursor:zoom-out}
+.image-viewer-video{max-width:92vw;max-height:92vh;box-shadow:0 30px 80px rgba(2,12,24,0.85), 0 12px 40px rgba(var(--accent-rgb),0.12);border-radius:10px;cursor:zoom-out}
+
+/* Favorite star overlay */
+.fav-star{
+  position:absolute;
+  left:8px;top:8px;
+  width:28px;height:28px;
+  border-radius:6px;border:0;
+  background:transparent;
+  color:var(--muted);
+  display:flex;align-items:center;justify-content:center;
+  cursor:pointer;z-index:40;
+  transition: transform .08s ease, background .12s ease, color .12s ease, box-shadow .12s ease;
+}
+.fav-star .material-symbols-outlined{
+  font-size:18px;
+  /* Use Material Symbols variable font axes to control outline vs filled styles. Default to outlined (FILL = 0). */
+  font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+  transition: font-variation-settings .12s ease, color .12s ease;
+}
+.fav-star.favorited{
+  /* Use filled glyph only; remove background/box-shadow so the icon itself indicates favorited state.
+     Do NOT change color here — only the glyph's FILL axis will change. */
+  background: transparent;
+  box-shadow: none;
+  color: var(--accent);
+}
+.fav-star.favorited .material-symbols-outlined{
+  /* Switch the Material Symbol to filled style only (no color change) */
+  font-variation-settings: 'FILL' 1, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+}
+.fav-star .fav-icon{width:18px;height:18px;display:block}
+.fav-star .fav-icon .star{fill:none;stroke:currentColor;stroke-width:1.5}
+.fav-star.favorited .fav-icon .star{fill:currentColor;stroke:currentColor}
+.fav-star:active{transform:scale(0.96)}
+
+/* Sticky copyright footer */
+.site-footer{
+  position:fixed;
+  left:0;
+  right:0;
+  bottom:0;
+  z-index:9998;
+  text-align:center;
+  padding:8px 12px;
+  font-family: Consolas, 'Courier New', monospace;
+  font-size:12px;
+  color: rgba(228, 228, 228, 0.842);
+  background: black;
+  border-top: 1px solid rgba(255,255,255,0.02);
+  backdrop-filter: blur(4px);
+}
+
+
+/* Ensure main content isn't obscured by the fixed footer */
+main{padding-bottom:48px}
+
+/* Credits overlay - centered rolling credits */
+.credits-overlay{position:fixed;inset:0;display:flex;align-items:center;justify-content:center;z-index:10005;pointer-events:none;opacity:0;transition:opacity .36s ease;}
+.credits-overlay.hidden{display:block;pointer-events:none;opacity:0}
+.credits-overlay.visible{pointer-events:auto;opacity:1}
+.credits-backdrop{position:absolute;inset:0;background:rgba(2,6,10,0.6);backdrop-filter:blur(4px);-webkit-backdrop-filter:blur(4px)}
+.credits-container{position:relative;z-index:10006;max-width:760px;width:88%;max-height:70vh;display:flex;align-items:center;justify-content:center;padding:18px}
+.credits-roll{background:linear-gradient(180deg, rgba(8,10,12,0.98), rgba(10,12,14,0.96));border-radius:10px;padding:18px 22px;color:var(--muted);box-shadow:0 30px 80px rgba(2,12,24,0.85), 0 12px 40px rgba(var(--accent-rgb),0.06);border:1px solid rgba(255,255,255,0.04);width:100%;max-width:560px;overflow:hidden}
+.credits-roll h3{margin:0 0 12px 0;color:var(--accent);text-align:center;font-size:20px}
+.credits-list{display:flex;flex-direction:column;gap:8px;align-items:center;}
+.credits-item{font-size:18px;font-weight:700;color:#e8f6f4}
+
+/* Rolling animation: translateY from bottom to top repeatedly */
+.credits-list{
+  animation: rollCredits 20s linear infinite;
+  will-change: transform;
+}
+
+.CreditsRole {
+  color: var(--accent)
+}
+
+#VersionNumber {
+  position: relative;
+  left: 2px;
+  font-size: 12px;
+  color: var(--muted);
+  opacity: 0.6;
+  display: block;
+}
+
+@keyframes rollCredits{
+  0% { transform: translateY(40%); opacity:0 }
+  6% { opacity:1 }
+  50% { transform: translateY(-40%); opacity:1 }
+  94% { opacity:1 }
+  100% { transform: translateY(-60%); opacity:0 }
+}
+
+/* Reduce motion preference support: make list static */
+@media (prefers-reduced-motion: reduce){
+  .credits-list{ animation: none !important }
+}
+
+/* Ensure footer text remains interactive and indicates hover affordance */
+.site-footer:hover{cursor:pointer;opacity:0.95}
+
+/* Liquid Glass mode: subtle glassmorphism applied when `liquid-glass` class is on the root */
+.liquid-glass *{transition:background .18s ease, box-shadow .18s ease, border-color .18s ease, color .12s ease}
+.liquid-glass .side-panel,
+.liquid-glass .modal,
+.liquid-glass .card,
+.liquid-glass .top-settings,
+.liquid-glass .btn,
+.liquid-glass .mobile-side-toggle{ 
+  /* translucent base using user-controlled opacity */
+  background: linear-gradient(180deg, rgba(var(--accent-rgb), var(--liquid-tint-alpha)), rgba(255,255,255, var(--liquid-opacity))) !important;
+  border: 1px solid rgba(var(--accent-rgb), calc(var(--liquid-btn-alpha) * 0.6)) !important;
+  box-shadow: 0 12px 40px rgba(2,12,24,0.6);
+  backdrop-filter: blur(8px) saturate(120%);
+  -webkit-backdrop-filter: blur(8px) saturate(120%);
+  border-radius:12px !important;
+}
+.liquid-glass .card{ overflow:visible }
+.liquid-glass .card .thumb{ background: linear-gradient(180deg, rgba(255,255,255, calc(var(--liquid-opacity) * 0.8)), rgba(0,0,0, calc(var(--liquid-opacity) * 1.2))); border-radius:10px }
+
+/* Make buttons remain solid (not overly transparent) when liquid glass is enabled */
+.liquid-glass .btn,
+.liquid-glass .modal .btn,
+.liquid-glass .card-foot .btn,
+.liquid-glass #adminActions .btn,
+.liquid-glass .side-footer button#settingsBtn{
+  background: rgba(var(--accent-rgb), var(--liquid-btn-alpha)) !important;
+  color: #031022 !important;
+  border: 1px solid rgba(var(--accent-rgb), calc(var(--liquid-btn-alpha) * 0.9)) !important;
+  box-shadow: 0 8px 20px rgba(var(--accent-rgb), calc(var(--liquid-btn-alpha) * 0.9));
+}
+.liquid-glass .btn:hover, .liquid-glass .card-foot .btn:hover, .liquid-glass #adminActions .btn:hover{ background-color: rgba(var(--accent-strong-rgb), calc(var(--liquid-btn-alpha) * 0.95)) !important; }
+.liquid-glass .modal{ background: linear-gradient(180deg, rgba(var(--accent-rgb), calc(var(--liquid-tint-alpha) * 0.6)), rgba(255,255,255, calc(var(--liquid-opacity) * 0.6))); }
+.liquid-glass .top-settings, .liquid-glass .mobile-side-toggle{ padding:6px; }
+.liquid-glass .site-footer{ background: rgba(0,0,0,0.5); backdrop-filter: blur(6px) }
+.liquid-glass .card::before{
+  content:'';position:absolute;inset:0;border-radius:12px;pointer-events:none;background:linear-gradient(180deg, rgba(var(--accent-rgb), calc(var(--liquid-tint-alpha) * 0.6)), rgba(255,255,255, calc(var(--liquid-opacity) * 0.35)));mix-blend-mode:overlay;opacity:0.8}
+
+/* Liquid-glass styling for the transparency slider itself */
+.liquid-glass #liquidGlassTransparency{
+  -webkit-appearance:none; appearance:none; height:8px; border-radius:8px; cursor:pointer; width:100%;
+  background: linear-gradient(90deg, rgba(var(--accent-rgb), calc(var(--liquid-btn-alpha) * 0.9)) 0%, rgba(255,255,255,0.06) 100% );
+  box-shadow: 0 6px 18px rgba(2,12,24,0.4);
+}
+.liquid-glass #liquidGlassTransparency:focus{ outline:2px solid rgba(var(--accent-rgb),0.12); outline-offset:2px }
+.liquid-glass #liquidGlassTransparency::-webkit-slider-thumb{ -webkit-appearance:none; appearance:none; width:16px; height:16px; border-radius:50%; background:rgba(var(--accent-rgb),1); border:2px solid rgba(0,0,0,0.35); box-shadow:0 8px 20px rgba(var(--accent-rgb),0.2); margin-top:-4px }
+.liquid-glass #liquidGlassTransparency::-moz-range-thumb{ width:16px; height:16px; border-radius:50%; background:rgba(var(--accent-rgb),1); border:2px solid rgba(0,0,0,0.35); box-shadow:0 8px 20px rgba(var(--accent-rgb),0.2) }
+.liquid-glass #liquidGlassTransparency::-webkit-slider-runnable-track{ height:8px; border-radius:8px }
+.liquid-glass #liquidGlassTransparency::-moz-range-track{ height:8px; border-radius:8px }
+
+/* In liquid-glass mode: simplify import button hover (no glow or sheen). */
+/* Import buttons live under .card-foot — remove box-shadow and pseudo-element sheen, only scale on hover. */
+.liquid-glass .card-foot .btn,
+.liquid-glass .card-foot .btn.shiny{
+  transition: transform .14s ease !important;
+  box-shadow: none !important;
+  filter: none !important;
+}
+.liquid-glass .card-foot .btn:hover,
+.liquid-glass .card-foot .btn.shiny:hover{
+  /* Only scale on hover; no translate or glow */
+  transform: scale(1.06) !important;
+  box-shadow: none !important;
+  filter: none !important;
+}
+
+/* Hide the shine pseudo-elements entirely in liquid-glass so they don't overpower translucency */
+.liquid-glass .btn.shiny::after,
+.liquid-glass .btn.shiny::before{
+  display: none !important;
+  opacity: 0 !important;
+  transition: none !important;
+}
+
+#uploadIsAnimated {
+    position: relative;
+    top: 8px;
+}
+
+/* Snow effect styles */
+#snowLayer{position:fixed;left:0;top:0;right:0;bottom:0;pointer-events:none;z-index:10050;overflow:hidden}
+.snowflake{position:absolute;background:#fff;border-radius:50%;opacity:0.95;pointer-events:none;filter:drop-shadow(0 6px 12px rgba(255,255,255,0.08));will-change:transform}
+.snow-accum{position:absolute;left:0;right:0;bottom:0;height:0;pointer-events:none;z-index:10051;overflow:visible}
+.snow-accum .snow-column{position:absolute;bottom:0;background:#ffffff;border-radius:4px;opacity:0.95}
+.snow-accum .snow-column.fade{transition:height 1s linear, opacity 1s linear}
+
+/* smaller devices: reduce snowflake count visually */
+@media (max-width:640px){
+  .snowflake{opacity:0.9}
+}
