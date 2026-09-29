@@ -2154,7 +2154,7 @@ if (adminPanelBtn && adminOverlay && adminModal){
                         const status = document.getElementById('uploadStatus'); if (status) status.textContent = '';
                         const upBtn = document.getElementById('uploadBtn'); if (upBtn) upBtn.disabled = false;
                     }
-                    if (adminActionsEl) adminActionsEl.style.display = 'flex';
+                    if (adminActionsEl) adminActionsEl.style.display = 'grid';
                 }catch(e){ console.warn('Failed to reset admin UI', e); }
     }
 
@@ -2425,7 +2425,7 @@ if (replaceTagsBtn && adminReplaceTagsForm){
     cancelReplaceTagsBtn && cancelReplaceTagsBtn.addEventListener('click', ()=>{
         const adminActionsEl = document.getElementById('adminActions');
         if (adminReplaceTagsForm) adminReplaceTagsForm.style.display = 'none';
-        if (adminActionsEl) adminActionsEl.style.display = 'flex';
+        if (adminActionsEl) adminActionsEl.style.display = 'grid';
     });
 
     doReplaceTagsBtn && doReplaceTagsBtn.addEventListener('click', async ()=>{
@@ -2445,7 +2445,7 @@ if (replaceTagsBtn && adminReplaceTagsForm){
             setTimeout(()=>{
                 const adminActionsEl = document.getElementById('adminActions');
                 if (adminReplaceTagsForm) adminReplaceTagsForm.style.display = 'none';
-                if (adminActionsEl) adminActionsEl.style.display = 'flex';
+                if (adminActionsEl) adminActionsEl.style.display = 'grid';
                 replaceTagsStatus.textContent = '';
             }, 900);
         }catch(err){
@@ -2644,7 +2644,7 @@ if (newUserBtn && newUserModalOverlay && newUserModal) {
 
 if (cancelEditBtn){
     cancelEditBtn.addEventListener('click', ()=>{
-        const adminActionsEl = document.getElementById('adminActions'); if (adminActionsEl) adminActionsEl.style.display = 'flex';
+        const adminActionsEl = document.getElementById('adminActions'); if (adminActionsEl) adminActionsEl.style.display = 'grid';
         if (adminEditForm) adminEditForm.style.display = 'none';
         editTagsRequestId++;
         loadedEditExternalId = null;
@@ -2779,7 +2779,7 @@ if (confirmEditBtn){
             try{ if (thumbInput) thumbInput.value = ''; if (assetFileInput) assetFileInput.value = ''; }catch(e){}
             // hide form after short delay (match delete timing)
             setTimeout(()=>{
-                const adminActionsEl = document.getElementById('adminActions'); if (adminActionsEl) adminActionsEl.style.display = 'flex';
+                const adminActionsEl = document.getElementById('adminActions'); if (adminActionsEl) adminActionsEl.style.display = 'grid';
                 if (adminEditForm) adminEditForm.style.display = 'none';
                 if (editStatus) editStatus.textContent = '';
             }, 900);
@@ -2797,7 +2797,7 @@ if (cancelDeleteBtn){
         const delForm = document.getElementById('adminDeleteForm');
         const adminActionsEl = document.getElementById('adminActions');
         if (delForm) delForm.style.display = 'none';
-        if (adminActionsEl) adminActionsEl.style.display = 'flex';
+        if (adminActionsEl) adminActionsEl.style.display = 'grid';
         const status = document.getElementById('deleteStatus'); if (status) status.textContent = '';
     });
 }
@@ -2823,7 +2823,7 @@ if (confirmDeleteBtn){
                 const delForm = document.getElementById('adminDeleteForm');
                 const adminActionsEl = document.getElementById('adminActions');
                 if (delForm) delForm.style.display = 'none';
-                if (adminActionsEl) adminActionsEl.style.display = 'flex';
+                if (adminActionsEl) adminActionsEl.style.display = 'grid';
                 if (status) status.textContent = '';
             }, 900);
         }catch(err){ console.error('Delete failed', err); if (status) status.textContent = 'Delete failed: ' + (err.message || 'Unknown'); }
@@ -3008,7 +3008,7 @@ if (uploadBtn){
                 // hide upload form after short delay (mirror delete behavior)
                 setTimeout(()=>{
                     if (adminFormEl) adminFormEl.style.display = 'none';
-                    if (adminActionsEl) adminActionsEl.style.display = 'flex';
+                    if (adminActionsEl) adminActionsEl.style.display = 'grid';
                     const statusEl = document.getElementById('uploadStatus'); if (statusEl) statusEl.textContent = '';
                 }, 450);
             }catch(e){ console.warn('Failed to clear upload form fields', e); }
@@ -3438,3 +3438,4 @@ function playChosiSound() {
         window.scrollTo({ top: 0, behavior: 'smooth' });
     });
 })();
+

@@ -539,26 +539,35 @@ button:hover, .btn:hover, .fav-star:hover, .clear-tags-btn:hover, .tag-chip butt
 /* Upload button group */
 .modal-content #uploadBtn{min-width:140px;padding:10px 14px;border-radius:8px;font-weight:800; text-align: center;}
 
-/* Admin actions group: show buttons in one line */
-#adminActions{display:flex;flex-direction:row;gap:12px;align-items:center}
-#adminActions .btn.small{padding:8px 12px}
-#adminActions .btn{flex:1;width:auto;min-width:0}
-/* Ensure all admin action buttons have the same two-row height and allow wrapping */
+/* Admin actions: a stable responsive grid prevents long labels from crushing buttons. */
+#adminActions{
+  display:grid;
+  grid-template-columns:repeat(auto-fit,minmax(150px,1fr));
+  gap:10px;
+  width:100%;
+  margin-top:14px;
+  align-items:stretch;
+}
+#adminActions .btn.small{padding:10px 12px}
 #adminActions .btn{
-  display:flex;
+  display:inline-flex;
   align-items:center;
   justify-content:center;
+  gap:7px;
   text-align:center;
-  white-space:normal; /* allow text to wrap onto a second line */
-  word-break:break-word;
-  line-height:1.1;
-  min-height:56px; /* height to accommodate two lines comfortably */
-  padding:8px 12px; /* ensure consistent padding */
+  white-space:normal;
+  word-break:normal;
+  line-height:1.2;
+  min-width:0;
+  min-height:48px;
+  width:100%;
 }
-/* On small screens, stack the buttons vertically */
+#adminActions .btn .material-symbols-outlined{
+  flex:0 0 auto;
+  font-size:20px;
+}
 @media (max-width:640px){
-  #adminActions{flex-direction:column}
-  #adminActions .btn{width:100%}
+  #adminActions{grid-template-columns:1fr;gap:8px}
 }
 .modal-content #uploadBtn:hover{box-shadow:0 12px 30px rgba(var(--accent-rgb),0.08)}
 
