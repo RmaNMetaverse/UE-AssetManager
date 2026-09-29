@@ -31,11 +31,11 @@ The web app is the catalogue and file delivery layer. To actually import assets 
    docker compose up -d --build
    ```
 
-4. Open `http://localhost:4030` and sign in as `admin` / `admin` (or the values in `.env`). Use **Change Password** in the app after signing in, especially before exposing it beyond a trusted local network. Admins can add more users in the UI.
+4. Open `http://localhost:8080` and sign in as `admin` / `admin` (or the values in `.env`). Use **Change Password** in the app after signing in, especially before exposing it beyond a trusted local network. Admins can add more users in the UI.
 
 Windows PowerShell copy command: `Copy-Item .env.example .env`. Linux/macOS: `cp .env.example .env`.
 
-The same admin account opens **Database** and **Stored Files** from the app's Admin panel, or directly at `http://localhost:4030/admin-tools.html`. The database manager browses assets, users, and favorites, checks SQLite integrity, edits asset metadata, removes favorite rows, and creates full backups. Password hashes and session tokens are not shown. The storage view scans `data/assets`, shows the state and size of each asset file, thumbnail, and poster, flags missing or external files, and lists orphan files with no database reference. Both views require an admin login; SQLite has no separate database password.
+The same admin account opens **Database** and **Stored Files** from the app's Admin panel, or directly at `http://localhost:8080/admin-tools.html` (use your configured `APP_PORT` if different). The database manager browses assets, users, and favorites, checks SQLite integrity, edits asset metadata, removes favorite rows, and creates full backups. Password hashes and session tokens are not shown. The storage view scans `data/assets`, shows the state and size of each asset file, thumbnail, and poster, flags missing or external files, and lists orphan files with no database reference. Both views require an admin login; SQLite has no separate database password.
 
 The companion Unreal Engine plugin is required for importing assets into Unreal Engine. This repository currently contains the web manager only; the plugin ZIP will be added later.
 
@@ -71,7 +71,7 @@ For a fully offline host backup, stop the app and copy the entire `data` directo
 
 ## Update
 
-Back up first, then update the source files and run `docker compose up -d --build`. The bind-mounted `data` folder is retained. Check `docker compose logs --tail=100 asset-manager` and `http://localhost:4030/health` after the restart.
+Back up first, then update the source files and run `docker compose up -d --build`. The bind-mounted `data` folder is retained. Check `docker compose logs --tail=100 asset-manager` and `http://localhost:8080/health` (or your configured `APP_PORT`) after the restart.
 
 ## Run without Docker
 
@@ -108,3 +108,4 @@ The importer streams each old share directly into a UUID directory, rewrites its
 `npm test` in `assetmanager_backend` exercises login, UI serving, uploads, resumable chunks, ranged download, search, favorites, file replacement, full backup, archive extraction, offline restore, and legacy file import. The Dockerfile is pinned to the same Node 24.12 runtime as the tested native service.
 
 For the complete Windows, Linux, and macOS deployment guide, see [deploy.md](D:/Moses/UE-AssetManager/deploy.md).
+

@@ -12,7 +12,7 @@ docker compose up -d --build
 docker compose ps
 ```
 
-Open `http://localhost:4030`, sign in as `admin` / `admin`, and change the password. Persistent data is in `data\`. To use another NTFS drive, change `./data:/data` in `compose.yaml` to `D:\UE-AssetManager-Data:/data`.
+Open `http://localhost:8080`, sign in as `admin` / `admin`, and change the password. Persistent data is in `data\`. To use another NTFS drive, change `./data:/data` in `compose.yaml` to `D:\UE-AssetManager-Data:/data`. If 8080 is already in use, set `APP_PORT=8081` (or another free host port) in `.env` and open that port instead.
 
 ## Docker on Linux
 
@@ -24,7 +24,7 @@ docker compose up -d --build
 docker compose ps
 ```
 
-Sign in at `http://localhost:4030` as `admin` / `admin`, then change the password. For a dedicated data disk, use an absolute bind mount such as `/srv/ue-asset-manager-data:/data`.
+Sign in at `http://localhost:8080` as `admin` / `admin`, then change the password. For a dedicated data disk, use an absolute bind mount such as `/srv/ue-asset-manager-data:/data`.
 
 ## Docker on macOS
 
@@ -35,7 +35,7 @@ cp .env.example .env
 docker compose up -d --build
 ```
 
-Open `http://localhost:4030`, sign in as `admin` / `admin`, change the password, and upload your own assets.
+Open `http://localhost:8080`, sign in as `admin` / `admin`, change the password, and upload your own assets.
 
 ## Native Node on Windows
 
@@ -92,4 +92,5 @@ The restore validates SQLite and referenced files and keeps previous active data
 
 ## Updates and troubleshooting
 
-Back up first, then run `docker compose up -d --build`. Never delete `data` during an update. Check `docker compose logs --tail=200 asset-manager` and `http://localhost:4030/health`. Admin → Stored Files identifies missing paths; files with no catalogue record appear as orphans.
+Back up first, then run `docker compose up -d --build`. Never delete `data` during an update. Check `docker compose logs --tail=200 asset-manager` and `http://localhost:8080/health` (or your configured `APP_PORT`). Admin → Stored Files identifies missing paths; files with no catalogue record appear as orphans.
+
