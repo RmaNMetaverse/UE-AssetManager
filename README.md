@@ -11,6 +11,8 @@ The original browser interface now runs with one Node service. It serves the UI 
 ## Unreal Engine importing
 
 The web app is the catalogue and file delivery layer. To actually import assets into Unreal Engine, use the companion Unreal Engine plugin. The plugin ZIP will be added to this repository later. Install it in your Unreal project and use its import workflow with the asset links from the manager.
+https://github.com/RmaNMetaverse/UE-AssetManager/releases/download/UE5.8_AssetManagerCompanionPlugin/UEAssetManagerCompanion-UE5.8.zip
+
 
 ## Highlights
 
