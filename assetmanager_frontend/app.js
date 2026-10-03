@@ -1106,6 +1106,28 @@ function applyFavoritesFilter(){
 
 let customSortDraggedCard = null;
 let customSortOriginalOrder = [];
+let customSortAutoScrollTimer = null;
+let customSortAutoScrollDirection = 0;
+
+function stopCustomSortAutoScroll(){
+    if (customSortAutoScrollTimer) window.clearInterval(customSortAutoScrollTimer);
+    customSortAutoScrollTimer = null;
+    customSortAutoScrollDirection = 0;
+}
+
+function updateCustomSortAutoScroll(clientY){
+    const edge = Math.min(110, Math.max(56, window.innerHeight * 0.14));
+    const direction = clientY <= edge ? -1 : clientY >= window.innerHeight - edge ? 1 : 0;
+    if (!direction) return stopCustomSortAutoScroll();
+    if (direction === customSortAutoScrollDirection && customSortAutoScrollTimer) return;
+    stopCustomSortAutoScroll();
+    customSortAutoScrollDirection = direction;
+    customSortAutoScrollTimer = window.setInterval(()=>{
+        if (!customSortDraggedCard || !canEditCustomSort()) return stopCustomSortAutoScroll();
+        const distance = direction * (clientY <= edge || clientY >= window.innerHeight - edge ? 18 : 0);
+        if (distance) window.scrollBy({ top: distance, behavior: 'auto' });
+    }, 35);
+}
 const customSortSelectedIds = new Set();
 
 function customSortIsMultiSelect(event){
@@ -1209,6 +1231,7 @@ function enableCustomSortDrag(){
     grid.addEventListener('dragover', (event)=>{
         if (!customSortDraggedCard || !canEditCustomSort()) return;
         event.preventDefault();
+        updateCustomSortAutoScroll(event.clientY);
         event.dataTransfer.dropEffect = 'move';
         const target = event.target.closest('.card[data-external-id]');
         if (!target || customSortSelectedIds.has(String(target.dataset.externalId))) return;
@@ -1228,6 +1251,7 @@ function enableCustomSortDrag(){
         const changed = newOrder.join(',') !== customSortOriginalOrder.join(',');
         customSortDraggedCard.classList.remove('custom-sort-dragging');
         selectedCustomSortCards().forEach(card => card.classList.remove('custom-sort-dragging'));
+        stopCustomSortAutoScroll();
         customSortDraggedCard = null;
         if (changed) saveCustomDisplayOrder();
     });
@@ -1317,6 +1341,7 @@ function render(){
         });
         card.addEventListener('dragend', ()=>{
             selectedCustomSortCards().forEach(node => node.classList.remove('custom-sort-dragging'));
+            stopCustomSortAutoScroll();
             customSortDraggedCard = null;
         });
     }
