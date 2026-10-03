@@ -287,11 +287,20 @@ button:hover, .btn:hover, .fav-star:hover, .clear-tags-btn:hover, .tag-chip butt
 /* User avatar (small circle with initial) */
 .user-avatar-wrap{position:relative;display:flex;align-items:center;position:relative;left: 4%;}
 .user-avatar{width:36px;height:36px;border-radius:50%;display:inline-flex;align-items:center;justify-content:center;background:linear-gradient(180deg,var(--accent-strong),var(--accent));color:#031022;font-weight:800;border:0;cursor:pointer;font-size:14px}
+.user-avatar.has-image{background-size:cover;background-position:center;color:transparent}
 .user-avatar:focus{outline:2px solid rgba(var(--accent-rgb),0.14)}
 .user-avatar-menu{position:absolute;right:0;top:calc(100% + 8px);background:var(--panel);border:1px solid rgba(255,255,255,0.04);padding:8px;border-radius:8px;box-shadow:0 12px 40px rgba(2,12,24,0.6);min-width:140px;z-index:120}
 .user-avatar-menu.hidden{display:none}
 .user-avatar-menu-item{display:block;width:100%;background:transparent;border:0;color:var(--muted);padding:8px 10px;text-align:left;border-radius:6px;cursor:pointer;text-align: center;}
 .user-avatar-menu-item:hover{background:rgba(255,255,255,0.02);color:var(--accent)}
+.profile-picture-section{display:flex;flex-direction:column;gap:10px;padding:4px 0 18px;border-bottom:1px solid var(--border);margin-bottom:16px}
+.profile-picture-help{display:block;color:var(--muted);font-size:12px;font-weight:400;margin-top:4px}
+.profile-picture-editor{display:flex;align-items:flex-start;gap:18px;flex-wrap:wrap}
+#avatarCropCanvas{width:180px;height:180px;border-radius:50%;background:#101820;border:2px solid rgba(var(--accent-rgb),.45);object-fit:cover}
+.profile-picture-controls{display:flex;flex:1;min-width:220px;flex-direction:column;gap:9px;color:var(--muted);font-size:13px}
+.profile-picture-controls label{display:flex;align-items:center;gap:10px}
+.profile-picture-controls input[type=range]{flex:1;accent-color:var(--accent)}
+.profile-picture-message{min-height:18px;color:var(--muted)}
 
 @media (max-width:640px){
   .user-avatar{width:32px;height:32px;font-size:13px}

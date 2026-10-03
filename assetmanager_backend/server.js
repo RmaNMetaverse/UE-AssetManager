@@ -17,10 +17,11 @@ const DATA_DIR = path.resolve(process.env.DATA_DIR || path.join(__dirname, 'data
 const ASSET_DIR = path.join(DATA_DIR, 'assets');
 const STAGING_DIR = path.join(DATA_DIR, 'staging');
 const BACKUP_DIR = path.join(DATA_DIR, 'backups');
+const AVATAR_DIR = path.join(DATA_DIR, 'avatars');
 const SESSION_DIR = path.join(STAGING_DIR, 'resumable');
 const DB_FILE = path.join(DATA_DIR, 'catalog.sqlite');
 const FRONTEND_DIR = path.resolve(__dirname, '..', 'assetmanager_frontend');
-for (const dir of [DATA_DIR, ASSET_DIR, STAGING_DIR, BACKUP_DIR, SESSION_DIR]) fs.mkdirSync(dir, { recursive: true });
+for (const dir of [DATA_DIR, ASSET_DIR, STAGING_DIR, BACKUP_DIR, SESSION_DIR, AVATAR_DIR]) fs.mkdirSync(dir, { recursive: true });
 
 const db = new DatabaseSync(DB_FILE);
 db.exec(`PRAGMA journal_mode=WAL; PRAGMA foreign_keys=ON; PRAGMA busy_timeout=5000;
@@ -50,6 +51,8 @@ CREATE TABLE IF NOT EXISTS sessions (
 CREATE INDEX IF NOT EXISTS assets_order_idx ON assets(displayOrder, externalId);
 CREATE UNIQUE INDEX IF NOT EXISTS assets_name_category_idx ON assets(assetName COLLATE NOCASE, category COLLATE NOCASE);
 CREATE INDEX IF NOT EXISTS favorites_user_idx ON favorites(username);`);
+try { db.exec('ALTER TABLE users ADD COLUMN avatarPath TEXT'); } catch (_) { /* already migrated */ }
+try { db.exec('ALTER TABLE users ADD COLUMN avatarUpdatedAt TEXT'); } catch (_) { /* already migrated */ }
 
 const app = express();
 if (process.env.TRUST_PROXY === '1') app.set('trust proxy', 1);
@@ -62,6 +65,10 @@ const upload = multer({
   storage: multer.diskStorage({ destination: STAGING_DIR, filename: (_req, _file, cb) => cb(null, crypto.randomUUID()) }),
   limits: { fileSize: MAX_FILE_BYTES, files: 3, fields: 16 }
 }).fields([{ name: 'assetFile', maxCount: 1 }, { name: 'thumbnail', maxCount: 1 }, { name: 'thumbnailPoster', maxCount: 1 }]);
+const uploadAvatar = multer({
+  storage: multer.diskStorage({ destination: STAGING_DIR, filename: (_req, _file, cb) => cb(null, `avatar-${crypto.randomUUID()}`) }),
+  limits: { fileSize: 8 * 1024 * 1024, files: 1 }
+});
 
 const fail = (res, status, message) => res.status(status).json({ success: false, error: message });
 const run = (handler) => (req, res, next) => Promise.resolve().then(() => handler(req, res)).catch(next);
@@ -95,7 +102,8 @@ function presentAsset(req, row) {
     thumbnailPosterPath: fileUrl(req, row.thumbnailPosterPath), assetPath: fileUrl(req, row.assetPath) };
 }
 const presentUser = (row) => ({ id: row.id, username: row.username, isAdmin: !!row.isAdmin,
-  RGB: row.RGB, LiquidGlass: row.LiquidGlass, ThemeColor: row.ThemeColor, createdAt: row.createdAt });
+  RGB: row.RGB, LiquidGlass: row.LiquidGlass, ThemeColor: row.ThemeColor,
+  avatarUpdatedAt: row.avatarUpdatedAt || null, createdAt: row.createdAt });
 const assetByExternalId = id => one('SELECT * FROM assets WHERE externalId=?', id);
 const validId = value => Number.isSafeInteger(Number(value)) && Number(value) > 0;
 function nextExternalId() {
@@ -173,6 +181,21 @@ app.post('/auth/logout', auth, writeGate, (req, res) => {
   res.json({ success: true });
 });
 app.get('/auth/me', auth, (req, res) => res.json({ success: true, user: presentUser(req.user) }));
+app.get('/user/avatar', auth, (req, res) => {
+  if (!req.user.avatarPath) return res.sendStatus(404);
+  const absolute = path.resolve(DATA_DIR, req.user.avatarPath);
+  if (!absolute.startsWith(`${AVATAR_DIR}${path.sep}`) || !fs.existsSync(absolute)) return res.sendStatus(404);
+  res.set('Cache-Control', 'private, max-age=3600');
+  res.sendFile(absolute);
+});
+app.put('/user/avatar', auth, writeGate, uploadAvatar.single('avatar'), run(async (req, res) => {
+  if (!req.file) return fail(res, 400, 'Choose a profile picture');
+  const destination = path.join(AVATAR_DIR, `${req.user.id}.jpg`);
+  fs.rmSync(destination, { force: true });
+  fs.renameSync(req.file.path, destination);
+  exec('UPDATE users SET avatarPath=?, avatarUpdatedAt=? WHERE id=?', `avatars/${req.user.id}.jpg`, now(), req.user.id);
+  res.json({ success: true, user: presentUser(one('SELECT * FROM users WHERE id=?', req.user.id)) });
+}));
 app.post('/auth/editpassword', auth, writeGate, run(async (req, res) => {
   const { currentPassword, newPassword } = req.body || {};
   if (!await bcrypt.compare(String(currentPassword || ''), req.user.password))
@@ -720,7 +743,7 @@ async function createBackup() {
     while (activeWrites > 0) await new Promise(resolve => setTimeout(resolve, 100));
     await backup(db, path.join(snapshotDir, 'catalog.sqlite'));
     const pending = path.join(BACKUP_DIR, `${filename}.partial`);
-    await tar(['-czf', pending, '-C', snapshotDir, 'catalog.sqlite', '-C', DATA_DIR, 'assets']);
+    await tar(['-czf', pending, '-C', snapshotDir, 'catalog.sqlite', '-C', DATA_DIR, 'assets', 'avatars']);
     fs.renameSync(pending, path.join(BACKUP_DIR, filename));
     return filename;
   } finally {

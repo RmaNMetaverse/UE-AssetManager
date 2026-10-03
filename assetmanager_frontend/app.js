@@ -248,6 +248,13 @@ function updateAvatarUI(){
     if (currentUser && currentUser.username){
         const initial = String(currentUser.username).trim().charAt(0).toUpperCase();
         avatarBtn.textContent = initial;
+        avatarBtn.classList.remove('has-image');
+        avatarBtn.style.backgroundImage = '';
+        if (currentUser.avatarUpdatedAt && authToken) {
+            const image = new Image();
+            image.onload = ()=>{ avatarBtn.style.backgroundImage = `url("${API_BASE}/user/avatar?v=${encodeURIComponent(currentUser.avatarUpdatedAt)}")`; avatarBtn.classList.add('has-image'); };
+            image.src = `${API_BASE}/user/avatar?v=${encodeURIComponent(currentUser.avatarUpdatedAt)}`;
+        }
         avatarBtn.style.display = '';
     } else {
         // hide avatar if no user
@@ -255,6 +262,60 @@ function updateAvatarUI(){
         if (avatarMenu) avatarMenu.classList.add('hidden');
     }
 }
+
+// Profile picture crop and upload. The crop is rendered locally before upload.
+document.addEventListener('DOMContentLoaded', ()=>{
+    const fileInput = document.getElementById('avatarFileInput');
+    const canvas = document.getElementById('avatarCropCanvas');
+    const saveBtn = document.getElementById('saveAvatarBtn');
+    const message = document.getElementById('avatarMessage');
+    const zoomInput = document.getElementById('avatarZoom');
+    const xInput = document.getElementById('avatarOffsetX');
+    const yInput = document.getElementById('avatarOffsetY');
+    if (!fileInput || !canvas || !saveBtn) return;
+    const ctx = canvas.getContext('2d');
+    let image = null;
+    const draw = ()=>{
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        if (!image) { ctx.fillStyle = '#101820'; ctx.fillRect(0, 0, canvas.width, canvas.height); return; }
+        const scale = Math.max(canvas.width / image.width, canvas.height / image.height) * Number(zoomInput.value || 1);
+        const width = image.width * scale, height = image.height * scale;
+        const x = (canvas.width - width) * Number(xInput.value || 50) / 100;
+        const y = (canvas.height - height) * Number(yInput.value || 50) / 100;
+        ctx.drawImage(image, x, y, width, height);
+    };
+    [zoomInput, xInput, yInput].forEach(input => input.addEventListener('input', draw));
+    fileInput.addEventListener('change', ()=>{
+        const file = fileInput.files?.[0];
+        if (!file) return;
+        const reader = new FileReader();
+        reader.onload = ()=>{
+            image = new Image();
+            image.onload = ()=>{ zoomInput.value = '1'; xInput.value = '50'; yInput.value = '50'; saveBtn.disabled = false; draw(); };
+            image.src = reader.result;
+        };
+        reader.readAsDataURL(file);
+    });
+    saveBtn.addEventListener('click', ()=>{
+        if (!image || !authToken) return;
+        saveBtn.disabled = true;
+        message.textContent = 'Saving…';
+        canvas.toBlob(async blob=>{
+            try {
+                const form = new FormData();
+                form.append('avatar', blob, 'profile.jpg');
+                const response = await authFetch(`${API_BASE}/user/avatar`, { method:'PUT', body:form });
+                const result = await response.json().catch(()=>null);
+                if (!response.ok || !result?.success) throw new Error(result?.error || 'Could not save profile picture');
+                setCurrentUser(result.user);
+                updateAvatarUI();
+                message.textContent = 'Profile picture saved.';
+            } catch (error) { message.textContent = error.message || 'Upload failed'; }
+            finally { saveBtn.disabled = false; }
+        }, 'image/jpeg', 0.9);
+    });
+    draw();
+});
 
 document.addEventListener('DOMContentLoaded', ()=>{
     updateAvatarUI();
@@ -868,7 +929,7 @@ document.addEventListener('DOMContentLoaded', ()=>{
             const json = await res.json();
             if (!json || !json.success) { loginError.textContent = json?.error || 'Login failed'; loginError.style.display = 'block'; return; }
             setAuthToken(json.token);
-            setCurrentUser({ id: json.id, username: json.username, isAdmin: !!json.isAdmin, RGB: json.RGB || 0, LiquidGlass: json.LiquidGlass || 0, ThemeColor: json.ThemeColor || '' });
+            setCurrentUser({ id: json.id, username: json.username, isAdmin: !!json.isAdmin, RGB: json.RGB || 0, LiquidGlass: json.LiquidGlass || 0, ThemeColor: json.ThemeColor || '', avatarUpdatedAt: json.avatarUpdatedAt || null });
             try{ applyServerUserSettings(json); }catch(e){}
             // Offer to save credentials using the Credential Management API when available
             try{
@@ -3479,4 +3540,5 @@ function playChosiSound() {
         window.scrollTo({ top: 0, behavior: 'smooth' });
     });
 })();
+
 

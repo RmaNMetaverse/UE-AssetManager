@@ -20,7 +20,7 @@ try {
   if (!entries.includes('catalog.sqlite') || !entries.some(e => e === 'assets/' || e.startsWith('assets/')))
     throw new Error('Archive must contain catalog.sqlite and assets/');
   if (entries.some(e => e.startsWith('/') || e.includes('\\') || e.split('/').includes('..') ||
-    !(e === 'catalog.sqlite' || e === 'assets' || e.startsWith('assets/'))))
+    !(e === 'catalog.sqlite' || e === 'assets' || e.startsWith('assets/') || e === 'avatars' || e.startsWith('avatars/'))))
     throw new Error('Unsafe archive entry');
   execFileSync('tar', ['-xzf', archive, '-C', stage], { windowsHide: true });
   const candidate = new DatabaseSync(path.join(stage, 'catalog.sqlite'));
@@ -37,7 +37,7 @@ try {
     }
   } finally { candidate.close(); }
   fs.mkdirSync(previous);
-  const old = ['catalog.sqlite', 'catalog.sqlite-wal', 'catalog.sqlite-shm', 'assets'];
+  const old = ['catalog.sqlite', 'catalog.sqlite-wal', 'catalog.sqlite-shm', 'assets', 'avatars'];
   const moved = [];
   try {
     for (const name of old) {
@@ -46,8 +46,9 @@ try {
     }
     fs.renameSync(path.join(stage, 'catalog.sqlite'), path.join(data, 'catalog.sqlite'));
     fs.renameSync(path.join(stage, 'assets'), path.join(data, 'assets'));
+    if (fs.existsSync(path.join(stage, 'avatars'))) fs.renameSync(path.join(stage, 'avatars'), path.join(data, 'avatars'));
   } catch (error) {
-    for (const name of ['catalog.sqlite', 'assets']) fs.rmSync(path.join(data, name), { recursive: true, force: true });
+    for (const name of ['catalog.sqlite', 'assets', 'avatars']) fs.rmSync(path.join(data, name), { recursive: true, force: true });
     for (const name of moved) fs.renameSync(path.join(previous, name), path.join(data, name));
     throw error;
   }
