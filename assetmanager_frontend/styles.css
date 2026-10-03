@@ -190,6 +190,7 @@ html::-webkit-scrollbar-thumb:hover, body::-webkit-scrollbar-thumb:active {
 .card.custom-sort-card{cursor:grab;border-color:rgba(var(--accent-rgb),0.22)}
 .card.custom-sort-card:active{cursor:grabbing}
 .card.custom-sort-dragging{opacity:.42;transform:scale(.98);box-shadow:0 0 0 2px var(--accent)}
+.card.custom-sort-selected{outline:2px solid var(--accent);outline-offset:3px;box-shadow:0 0 0 4px rgba(var(--accent-rgb),.16)}
 .grid.custom-sort-saving{pointer-events:none;opacity:.82}
 .custom-sort-notice{margin-top:14px;padding:10px 12px;border:1px solid rgba(var(--accent-rgb),.25);border-radius:9px;background:rgba(var(--accent-rgb),.07);display:flex;align-items:center;gap:9px;color:var(--muted);font-size:13px}
 .custom-sort-notice .material-symbols-outlined{color:var(--accent)}

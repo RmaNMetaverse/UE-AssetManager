@@ -1045,6 +1045,33 @@ function applyFavoritesFilter(){
 
 let customSortDraggedCard = null;
 let customSortOriginalOrder = [];
+const customSortSelectedIds = new Set();
+
+function customSortIsMultiSelect(event){
+    return !!(event && (event.ctrlKey || event.metaKey));
+}
+
+function updateCustomSortSelection(card, event){
+    const id = String(card.dataset.externalId || '');
+    if (!id) return;
+    if (customSortIsMultiSelect(event)) {
+        if (customSortSelectedIds.has(id)) customSortSelectedIds.delete(id);
+        else customSortSelectedIds.add(id);
+    } else {
+        customSortSelectedIds.clear();
+        customSortSelectedIds.add(id);
+    }
+    grid.querySelectorAll('.card[data-external-id]').forEach(node => {
+        node.classList.toggle('custom-sort-selected', customSortSelectedIds.has(String(node.dataset.externalId)));
+    });
+    const count = customSortSelectedIds.size;
+    setCustomSortStatus(count > 1 ? `${count} assets selected — hold Ctrl/⌘ to add or remove` : '');
+}
+
+function selectedCustomSortCards(){
+    return Array.from(grid.querySelectorAll('.card[data-external-id]'))
+        .filter(card => customSortSelectedIds.has(String(card.dataset.externalId)));
+}
 
 function canEditCustomSort(){
     return !!(customSortEditing && currentUser && currentUser.isAdmin && lastAssetFetchWasUnfiltered && isUnfilteredAssetView() && defaultSortMode === 'custom');
@@ -1068,7 +1095,7 @@ function renderCustomSortControls(){
         notice = document.createElement('div');
         notice.id = 'customSortNotice';
         notice.className = 'custom-sort-notice';
-        notice.innerHTML = '<span class="material-symbols-outlined" aria-hidden="true">drag_indicator</span><span>Custom Sort: drag asset cards to rearrange the shared default order.</span><span id="customSortStatus" aria-live="polite"></span><button id="customSortDone" class="btn small" type="button">Done</button>';
+        notice.innerHTML = '<span class="material-symbols-outlined" aria-hidden="true">drag_indicator</span><span>Custom Sort: hold Ctrl (Windows/Linux) or ⌘ (macOS) to select multiple cards, then drag one selected card to move the group.</span><span id="customSortStatus" aria-live="polite"></span><button id="customSortDone" class="btn small" type="button">Done</button>';
         controlsEl.appendChild(notice);
         notice.querySelector('#customSortDone').addEventListener('click', ()=>{
             customSortEditing = false;
@@ -1123,11 +1150,14 @@ function enableCustomSortDrag(){
         event.preventDefault();
         event.dataTransfer.dropEffect = 'move';
         const target = event.target.closest('.card[data-external-id]');
-        if (!target || target === customSortDraggedCard) return;
+        if (!target || customSortSelectedIds.has(String(target.dataset.externalId))) return;
         const rect = target.getBoundingClientRect();
         const before = event.clientY < rect.top + rect.height / 2 ||
             (Math.abs(event.clientY - (rect.top + rect.height / 2)) < rect.height / 4 && event.clientX < rect.left + rect.width / 2);
-        grid.insertBefore(customSortDraggedCard, before ? target : target.nextSibling);
+        const moving = selectedCustomSortCards();
+        const reference = before ? target : target.nextSibling;
+        moving.forEach(card => card.remove());
+        moving.forEach(card => grid.insertBefore(card, reference));
     });
 
     grid.addEventListener('drop', (event)=>{
@@ -1136,6 +1166,7 @@ function enableCustomSortDrag(){
         const newOrder = Array.from(grid.querySelectorAll('.card[data-external-id]')).map(card => card.dataset.externalId);
         const changed = newOrder.join(',') !== customSortOriginalOrder.join(',');
         customSortDraggedCard.classList.remove('custom-sort-dragging');
+        selectedCustomSortCards().forEach(card => card.classList.remove('custom-sort-dragging'));
         customSortDraggedCard = null;
         if (changed) saveCustomDisplayOrder();
     });
@@ -1204,17 +1235,27 @@ function render(){
     if (canEditCustomSort()) {
         card.draggable = true;
         card.classList.add('custom-sort-card');
+        card.classList.toggle('custom-sort-selected', customSortSelectedIds.has(String(asset.externalId)));
         card.title = 'Drag to change the shared display order';
+        card.addEventListener('click', (event)=>{
+            if (event.target.closest('button,a,input,select,textarea,video')) return;
+            updateCustomSortSelection(card, event);
+        });
         card.addEventListener('dragstart', (event)=>{
             if (customSortSaving) { event.preventDefault(); return; }
+            if (!customSortSelectedIds.has(String(asset.externalId))) {
+                customSortSelectedIds.clear();
+                customSortSelectedIds.add(String(asset.externalId));
+                grid.querySelectorAll('.card[data-external-id]').forEach(node => node.classList.remove('custom-sort-selected'));
+            }
             customSortDraggedCard = card;
             customSortOriginalOrder = Array.from(grid.querySelectorAll('.card[data-external-id]')).map(node => node.dataset.externalId);
             event.dataTransfer.effectAllowed = 'move';
             event.dataTransfer.setData('text/plain', String(asset.externalId));
-            requestAnimationFrame(()=>card.classList.add('custom-sort-dragging'));
+            requestAnimationFrame(()=>selectedCustomSortCards().forEach(node => node.classList.add('custom-sort-dragging')));
         });
         card.addEventListener('dragend', ()=>{
-            card.classList.remove('custom-sort-dragging');
+            selectedCustomSortCards().forEach(node => node.classList.remove('custom-sort-dragging'));
             customSortDraggedCard = null;
         });
     }
